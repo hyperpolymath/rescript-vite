@@ -3,8 +3,10 @@
 //
 // RescriptCompiler.res — Bridge to the ReScript compiler process.
 //
-// Spawns `rescript build` (or watch mode) as a child process,
+// Spawns `rescript build` (or watch mode / rewatch) as a child process,
 // parses compiler output for errors/warnings, and reports changed files.
+// Supports both the classic `rescript build -w` and the newer `rewatch`
+// build system introduced in ReScript 12+.
 
 /// Compiler diagnostic severity
 type severity = Error | Warning
@@ -36,6 +38,8 @@ type config = {
   rescriptBin: option<string>,
   /// Whether to use Deno to run rescript (deno run -A npm:rescript)
   useDeno: bool,
+  /// Use rewatch instead of rescript build -w (ReScript 12+)
+  useRewatch: bool,
   /// Extra compiler flags
   compilerFlags: array<string>,
   /// Callback for diagnostics as they stream in
@@ -48,6 +52,7 @@ let defaultConfig = (cwd: string): config => {
   cwd,
   rescriptBin: None,
   useDeno: false,
+  useRewatch: false,
   compilerFlags: [],
   onDiagnostic: None,
   onFileChanged: None,
@@ -181,26 +186,43 @@ let parseChangedFiles = (output: string): array<string> => {
   changed
 }
 
+/// Build the command and args for the compiler invocation
+let buildCommand = (config: config, watchMode: bool): (string, array<string>) => {
+  if config.useRewatch {
+    // Rewatch mode — the rewatch binary handles watching natively
+    let bin = "npx"
+    let args = if watchMode {
+      ["rewatch", "watch"]->Array.concat(config.compilerFlags)
+    } else {
+      ["rewatch", "build"]->Array.concat(config.compilerFlags)
+    }
+    (bin, args)
+  } else if config.useDeno {
+    let watchArg = if watchMode { ["-w"] } else { [] }
+    ("deno", ["run", "-A", "npm:rescript", "build"]->Array.concat(watchArg)->Array.concat(config.compilerFlags))
+  } else {
+    let bin = config.rescriptBin->Option.getOr("npx")
+    let baseArgs = if bin === "npx" {
+      let watchArg = if watchMode { ["-w"] } else { [] }
+      ["rescript", "build"]->Array.concat(watchArg)
+    } else {
+      let watchArg = if watchMode { ["-w"] } else { [] }
+      ["build"]->Array.concat(watchArg)
+    }
+    (bin, baseArgs->Array.concat(config.compilerFlags))
+  }
+}
+
 /// Run a one-shot build and return the result
 let build = (config: config): promise<buildResult> => {
   Promise.make((resolve, _reject) => {
     let startTime = performanceNow()
-    let (cmd, args) = if config.useDeno {
-      ("deno", ["run", "-A", "npm:rescript", "build"]->Array.concat(config.compilerFlags))
-    } else {
-      let bin = config.rescriptBin->Option.getOr("npx")
-      let baseArgs = if bin === "npx" {
-        ["rescript", "build"]
-      } else {
-        ["build"]
-      }
-      (bin, baseArgs->Array.concat(config.compilerFlags))
-    }
+    let (cmd, args) = buildCommand(config, false)
 
     let outputBuf = ref("")
     let errorBuf = ref("")
 
-    let proc = spawn(cmd, args, {"cwd": config.cwd, "shell": true})
+    let proc = spawn(cmd, args, {"cwd": config.cwd, "shell": true, "env": %raw(`Object.assign({}, process.env, { NINJA_ANSI_FORCED: "1" })`)})
 
     onProcessData(proc->stdout, chunk => {
       outputBuf := outputBuf.contents ++ chunk
@@ -246,19 +268,9 @@ type watchHandle = {
 
 /// Start the compiler in watch mode. Returns a handle to stop it.
 let watch = (config: config): watchHandle => {
-  let (cmd, args) = if config.useDeno {
-    ("deno", ["run", "-A", "npm:rescript", "build", "-w"]->Array.concat(config.compilerFlags))
-  } else {
-    let bin = config.rescriptBin->Option.getOr("npx")
-    let baseArgs = if bin === "npx" {
-      ["rescript", "build", "-w"]
-    } else {
-      ["build", "-w"]
-    }
-    (bin, baseArgs->Array.concat(config.compilerFlags))
-  }
+  let (cmd, args) = buildCommand(config, true)
 
-  let proc = spawn(cmd, args, {"cwd": config.cwd, "shell": true})
+  let proc = spawn(cmd, args, {"cwd": config.cwd, "shell": true, "env": %raw(`Object.assign({}, process.env, { NINJA_ANSI_FORCED: "1" })`)})
 
   onProcessData(proc->stderr, chunk => {
     let diagnostics = parseDiagnostics(chunk)

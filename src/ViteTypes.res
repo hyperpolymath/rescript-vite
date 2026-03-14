@@ -9,8 +9,8 @@
 /// Vite resolved config (subset we care about)
 type resolvedConfig = {
   root: string,
-  command: string,  // "serve" | "build"
-  mode: string,     // "development" | "production"
+  command: string, // "serve" | "build"
+  mode: string, // "development" | "production"
 }
 
 /// Vite HMR context for handleHotUpdate
@@ -27,6 +27,7 @@ and moduleNode = {
 and viteDevServer = {
   moduleGraph: moduleGraph,
   ws: webSocketServer,
+  watcher: fileWatcher,
 }
 and moduleGraph = {
   getModulesByFile: string => option<array<moduleNode>>,
@@ -34,12 +35,26 @@ and moduleGraph = {
 and webSocketServer = {
   send: JSON.t => unit,
 }
+and fileWatcher = {
+  add: string => unit,
+  options: fileWatcherOptions,
+}
+and fileWatcherOptions = {
+  ignored: option<array<string>>,
+}
 
-/// Vite plugin definition (the object we return)
+/// Vite resolveId result
+type resolveIdResult = {id: string}
+
+/// Vite plugin definition (the object we return).
+/// Uses %raw for the config hook since it returns a plain JS object.
 type plugin = {
   name: string,
-  enforce: option<string>,  // "pre" | "post"
+  enforce: option<string>, // "pre" | "post"
+  config: option<unit => JSON.t>,
   configResolved: option<resolvedConfig => unit>,
+  configureServer: option<viteDevServer => unit>,
+  resolveId: option<(string, option<string>) => promise<option<resolveIdResult>>>,
   buildStart: option<unit => promise<unit>>,
   handleHotUpdate: option<hmrContext => option<array<moduleNode>>>,
   buildEnd: option<unit => unit>,

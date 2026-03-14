@@ -40,7 +40,16 @@ erl_crash.dump
 
 # ReScript
 /lib/bs/
+/lib/ocaml/
+/lib/rescript.lock
 /.bsb.lock
+*.ast
+*.cmi
+*.cmt
+*.cmj
+
+# Vite timestamp artifacts
+vite.config.*.timestamp-*
 
 # Python (SaltStack only)
 __pycache__/

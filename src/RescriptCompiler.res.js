@@ -8,6 +8,7 @@ function defaultConfig(cwd) {
     cwd: cwd,
     rescriptBin: undefined,
     useDeno: false,
+    useRewatch: false,
     compilerFlags: [],
     onDiagnostic: undefined,
     onFileChanged: undefined
@@ -97,31 +98,54 @@ function parseChangedFiles(output) {
   return changed;
 }
 
+function buildCommand(config, watchMode) {
+  if (config.useRewatch) {
+    let args = watchMode ? [
+        "rewatch",
+        "watch"
+      ].concat(config.compilerFlags) : [
+        "rewatch",
+        "build"
+      ].concat(config.compilerFlags);
+    return [
+      "npx",
+      args
+    ];
+  }
+  if (config.useDeno) {
+    let watchArg = watchMode ? ["-w"] : [];
+    return [
+      "deno",
+      [
+        "run",
+        "-A",
+        "npm:rescript",
+        "build"
+      ].concat(watchArg).concat(config.compilerFlags)
+    ];
+  }
+  let bin = Stdlib_Option.getOr(config.rescriptBin, "npx");
+  let baseArgs;
+  if (bin === "npx") {
+    let watchArg$1 = watchMode ? ["-w"] : [];
+    baseArgs = [
+      "rescript",
+      "build"
+    ].concat(watchArg$1);
+  } else {
+    let watchArg$2 = watchMode ? ["-w"] : [];
+    baseArgs = ["build"].concat(watchArg$2);
+  }
+  return [
+    bin,
+    baseArgs.concat(config.compilerFlags)
+  ];
+}
+
 function build(config) {
   return new Promise((resolve, _reject) => {
     let startTime = performance.now();
-    let match;
-    if (config.useDeno) {
-      match = [
-        "deno",
-        [
-          "run",
-          "-A",
-          "npm:rescript",
-          "build"
-        ].concat(config.compilerFlags)
-      ];
-    } else {
-      let bin = Stdlib_Option.getOr(config.rescriptBin, "npx");
-      let baseArgs = bin === "npx" ? [
-          "rescript",
-          "build"
-        ] : ["build"];
-      match = [
-        bin,
-        baseArgs.concat(config.compilerFlags)
-      ];
-    }
+    let match = buildCommand(config, false);
     let outputBuf = {
       contents: ""
     };
@@ -130,7 +154,8 @@ function build(config) {
     };
     let proc = Nodechild_process.spawn(match[0], match[1], {
       cwd: config.cwd,
-      shell: true
+      shell: true,
+      env: (Object.assign({}, process.env, { NINJA_ANSI_FORCED: "1" }))
     });
     onProcessData(proc.stdout, chunk => {
       outputBuf.contents = outputBuf.contents + chunk;
@@ -162,36 +187,11 @@ function build(config) {
 }
 
 function watch(config) {
-  let match;
-  if (config.useDeno) {
-    match = [
-      "deno",
-      [
-        "run",
-        "-A",
-        "npm:rescript",
-        "build",
-        "-w"
-      ].concat(config.compilerFlags)
-    ];
-  } else {
-    let bin = Stdlib_Option.getOr(config.rescriptBin, "npx");
-    let baseArgs = bin === "npx" ? [
-        "rescript",
-        "build",
-        "-w"
-      ] : [
-        "build",
-        "-w"
-      ];
-    match = [
-      bin,
-      baseArgs.concat(config.compilerFlags)
-    ];
-  }
+  let match = buildCommand(config, true);
   let proc = Nodechild_process.spawn(match[0], match[1], {
     cwd: config.cwd,
-    shell: true
+    shell: true,
+    env: (Object.assign({}, process.env, { NINJA_ANSI_FORCED: "1" }))
   });
   onProcessData(proc.stderr, chunk => {
     let diagnostics = parseDiagnostics(chunk);
@@ -232,6 +232,7 @@ export {
   matchCompiledFile,
   parseDiagnostics,
   parseChangedFiles,
+  buildCommand,
   build,
   watch,
   stop,

@@ -4,7 +4,12 @@
 // Tests for RescriptCompiler diagnostic parsing and changed file detection.
 
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { parseDiagnostics, parseChangedFiles, defaultConfig } from "../src/RescriptCompiler.res.js";
+import {
+  parseDiagnostics,
+  parseChangedFiles,
+  defaultConfig,
+  buildCommand,
+} from "../src/RescriptCompiler.res.js";
 
 Deno.test("RescriptCompiler", async (t) => {
   // --- parseDiagnostics ---
@@ -112,6 +117,7 @@ Deno.test("RescriptCompiler", async (t) => {
     const cfg = defaultConfig("/my/project");
     assertEquals(cfg.cwd, "/my/project");
     assertEquals(cfg.useDeno, false);
+    assertEquals(cfg.useRewatch, false);
     assertEquals(cfg.compilerFlags.length, 0);
   });
 
@@ -120,5 +126,79 @@ Deno.test("RescriptCompiler", async (t) => {
     assertEquals(cfg.onDiagnostic, undefined);
     assertEquals(cfg.onFileChanged, undefined);
     assertEquals(cfg.rescriptBin, undefined);
+  });
+
+  // --- buildCommand ---
+
+  await t.step("buildCommand with npx (default)", () => {
+    const cfg = { ...defaultConfig("."), useDeno: false, useRewatch: false };
+    const [cmd, args] = buildCommand(cfg, false);
+    assertEquals(cmd, "npx");
+    assertEquals(args.includes("rescript"), true);
+    assertEquals(args.includes("build"), true);
+    assertEquals(args.includes("-w"), false);
+  });
+
+  await t.step("buildCommand with npx watch mode", () => {
+    const cfg = { ...defaultConfig("."), useDeno: false, useRewatch: false };
+    const [cmd, args] = buildCommand(cfg, true);
+    assertEquals(cmd, "npx");
+    assertEquals(args.includes("-w"), true);
+  });
+
+  await t.step("buildCommand with Deno", () => {
+    const cfg = { ...defaultConfig("."), useDeno: true, useRewatch: false };
+    const [cmd, args] = buildCommand(cfg, false);
+    assertEquals(cmd, "deno");
+    assertEquals(args.includes("run"), true);
+    assertEquals(args.includes("-A"), true);
+    assertEquals(args.includes("npm:rescript"), true);
+  });
+
+  await t.step("buildCommand with Deno watch mode", () => {
+    const cfg = { ...defaultConfig("."), useDeno: true, useRewatch: false };
+    const [cmd, args] = buildCommand(cfg, true);
+    assertEquals(cmd, "deno");
+    assertEquals(args.includes("-w"), true);
+  });
+
+  await t.step("buildCommand with rewatch", () => {
+    const cfg = { ...defaultConfig("."), useDeno: false, useRewatch: true };
+    const [cmd, args] = buildCommand(cfg, false);
+    assertEquals(cmd, "npx");
+    assertEquals(args.includes("rewatch"), true);
+    assertEquals(args.includes("build"), true);
+  });
+
+  await t.step("buildCommand with rewatch watch mode", () => {
+    const cfg = { ...defaultConfig("."), useDeno: false, useRewatch: true };
+    const [cmd, args] = buildCommand(cfg, true);
+    assertEquals(cmd, "npx");
+    assertEquals(args.includes("rewatch"), true);
+    assertEquals(args.includes("watch"), true);
+  });
+
+  await t.step("buildCommand passes compiler flags", () => {
+    const cfg = {
+      ...defaultConfig("."),
+      useDeno: false,
+      useRewatch: false,
+      compilerFlags: ["-warn-error", "+a"],
+    };
+    const [_cmd, args] = buildCommand(cfg, false);
+    assertEquals(args.includes("-warn-error"), true);
+    assertEquals(args.includes("+a"), true);
+  });
+
+  await t.step("buildCommand with custom rescript binary", () => {
+    const cfg = {
+      ...defaultConfig("."),
+      useDeno: false,
+      useRewatch: false,
+      rescriptBin: "/usr/local/bin/rescript",
+    };
+    const [cmd, args] = buildCommand(cfg, false);
+    assertEquals(cmd, "/usr/local/bin/rescript");
+    assertEquals(args[0], "build");
   });
 });
