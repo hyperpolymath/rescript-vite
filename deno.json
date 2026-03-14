@@ -1,4 +1,22 @@
 {
+  "name": "@hyperpolymath/rescript-vite",
+  "version": "0.2.0",
+  "exports": {
+    ".": "./src/VitePluginRescript.res.js",
+    "./boj": "./src/BojBridge.res.js",
+    "./config": "./src/RescriptConfig.res.js"
+  },
+  "publish": {
+    "include": [
+      "src/*.res.js",
+      "src/*.res",
+      "LICENSE",
+      "LICENSE.txt",
+      "README.adoc",
+      "jsr.json",
+      "deno.json"
+    ]
+  },
   "tasks": {
     "res:build": "deno run -A npm:rescript build",
     "res:clean": "deno run -A npm:rescript clean",
