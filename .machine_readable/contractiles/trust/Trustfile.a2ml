@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: PMLP-1.0-or-later
 # =============================================================================
 # A2ML Trustfile Template (Cyber-Resilient Baseline)
-# Replace all {{PLACEHOLDERS}} for each derived repository.
+# Replace all placeholders for each derived repository.
 # =============================================================================
 
 ---
 ### [META]
-id: "did:web:{{DOMAIN}}"
+id: "did:web:hyperpolymath.github.io"
 version: "{{TRUSTFILE_VERSION}}"
 context:
   - "https://a2ml.org/ns/v2"
@@ -19,7 +19,7 @@ meta:
   signature:
     algorithm: "Ed448+Dilithium5"
     value: "{{PRIMARY_SIGNATURE}}"
-    signedBy: "did:web:{{DOMAIN}}#primary-sig"
+    signedBy: "did:web:hyperpolymath.github.io#primary-sig"
   fallbackSignature:
     algorithm: "SPHINCS+"
     value: "{{FALLBACK_SIGNATURE}}"
@@ -30,7 +30,7 @@ meta:
 
 ---
 ### [TRUSTFILE]
-issuer: "did:web:{{DOMAIN}}"
+issuer: "did:web:hyperpolymath.github.io"
 keys:
   - id: "#primary-sig"
     type: "HybridKey2024"

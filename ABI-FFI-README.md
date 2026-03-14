@@ -1,6 +1,6 @@
 {{~ Aditionally delete this line and fill out the template below ~}}
 
-# {{PROJECT}} ABI/FFI Documentation
+# rescript-vite ABI/FFI Documentation
 
 ## Overview
 
@@ -26,7 +26,7 @@ This library follows the **Hyperpolymath RSR Standard** for ABI and FFI design:
                   ▼
 ┌─────────────────────────────────────────────┐
 │  C Headers (auto-generated)                 │
-│  generated/abi/{{project}}.h                │
+│  generated/abi/rescript-vite.h                │
 └─────────────────┬───────────────────────────┘
                   │
                   │ imported by
@@ -39,7 +39,7 @@ This library follows the **Hyperpolymath RSR Standard** for ABI and FFI design:
 │  - Memory-safe by default                   │
 └─────────────────┬───────────────────────────┘
                   │
-                  │ compiled to lib{{project}}.so/.a
+                  │ compiled to librescript-vite.so/.a
                   ▼
 ┌─────────────────────────────────────────────┐
 │  Any Language via C ABI                     │
@@ -50,7 +50,7 @@ This library follows the **Hyperpolymath RSR Standard** for ABI and FFI design:
 ## Directory Structure
 
 ```
-{{project}}/
+rescript-vite/
 ├── src/
 │   ├── abi/                    # ABI definitions (Idris2)
 │   │   ├── Types.idr           # Core type definitions with proofs
@@ -67,11 +67,11 @@ This library follows the **Hyperpolymath RSR Standard** for ABI and FFI design:
 │       ├── test/
 │       │   └── integration_test.zig
 │       └── include/
-│           └── {{project}}.h   # C header (optional, can be generated)
+│           └── rescript-vite.h   # C header (optional, can be generated)
 │
 ├── generated/                  # Auto-generated files
 │   └── abi/
-│       └── {{project}}.h       # Generated from Idris2 ABI
+│       └── rescript-vite.h       # Generated from Idris2 ABI
 │
 └── bindings/                   # Language-specific wrappers (optional)
     ├── rust/
@@ -199,7 +199,7 @@ zig build test                    # Run tests
 
 ```bash
 cd src/abi
-idris2 --cg c-header Types.idr -o ../../generated/abi/{{project}}.h
+idris2 --cg c-header Types.idr -o ../../generated/abi/rescript-vite.h
 ```
 
 ### Cross-Compile
@@ -222,32 +222,32 @@ zig build -Dtarget=x86_64-windows
 ### From C
 
 ```c
-#include "{{project}}.h"
+#include "rescript-vite.h"
 
 int main() {
-    void* handle = {{project}}_init();
+    void* handle = rescript-vite_init();
     if (!handle) return 1;
 
-    int result = {{project}}_process(handle, 42);
+    int result = rescript-vite_process(handle, 42);
     if (result != 0) {
-        const char* err = {{project}}_last_error();
+        const char* err = rescript-vite_last_error();
         fprintf(stderr, "Error: %s\n", err);
     }
 
-    {{project}}_free(handle);
+    rescript-vite_free(handle);
     return 0;
 }
 ```
 
 Compile with:
 ```bash
-gcc -o example example.c -l{{project}} -L./zig-out/lib
+gcc -o example example.c -lrescript-vite -L./zig-out/lib
 ```
 
 ### From Idris2
 
 ```idris
-import {{PROJECT}}.ABI.Foreign
+import rescript-vite.ABI.Foreign
 
 main : IO ()
 main = do
@@ -264,22 +264,22 @@ main = do
 ### From Rust
 
 ```rust
-#[link(name = "{{project}}")]
+#[link(name = "rescript-vite")]
 extern "C" {
-    fn {{project}}_init() -> *mut std::ffi::c_void;
-    fn {{project}}_free(handle: *mut std::ffi::c_void);
-    fn {{project}}_process(handle: *mut std::ffi::c_void, input: u32) -> i32;
+    fn rescript-vite_init() -> *mut std::ffi::c_void;
+    fn rescript-vite_free(handle: *mut std::ffi::c_void);
+    fn rescript-vite_process(handle: *mut std::ffi::c_void, input: u32) -> i32;
 }
 
 fn main() {
     unsafe {
-        let handle = {{project}}_init();
+        let handle = rescript-vite_init();
         assert!(!handle.is_null());
 
-        let result = {{project}}_process(handle, 42);
+        let result = rescript-vite_process(handle, 42);
         assert_eq!(result, 0);
 
-        {{project}}_free(handle);
+        rescript-vite_free(handle);
     }
 }
 ```
@@ -287,21 +287,21 @@ fn main() {
 ### From Julia
 
 ```julia
-const lib{{project}} = "lib{{project}}"
+const librescript-vite = "librescript-vite"
 
 function init()
-    handle = ccall((:{{project}}_init, lib{{project}}), Ptr{Cvoid}, ())
+    handle = ccall((:rescript-vite_init, librescript-vite), Ptr{Cvoid}, ())
     handle == C_NULL && error("Failed to initialize")
     handle
 end
 
 function process(handle, input)
-    result = ccall((:{{project}}_process, lib{{project}}), Cint, (Ptr{Cvoid}, UInt32), handle, input)
+    result = ccall((:rescript-vite_process, librescript-vite), Cint, (Ptr{Cvoid}, UInt32), handle, input)
     result
 end
 
 function cleanup(handle)
-    ccall((:{{project}}_free, lib{{project}}), Cvoid, (Ptr{Cvoid},), handle)
+    ccall((:rescript-vite_free, librescript-vite), Cvoid, (Ptr{Cvoid},), handle)
 end
 
 # Usage
@@ -355,7 +355,7 @@ When modifying the ABI/FFI:
 
 2. **Generate C header**
    ```bash
-   idris2 --cg c-header src/abi/Types.idr -o generated/abi/{{project}}.h
+   idris2 --cg c-header src/abi/Types.idr -o generated/abi/rescript-vite.h
    ```
 
 3. **Update FFI implementation** (`ffi/zig/src/main.zig`)
@@ -374,12 +374,12 @@ When modifying the ABI/FFI:
 
 ## License
 
-{{LICENSE}}
+PMPL-1.0-or-later
 
 ## See Also
 
 - [Idris2 Documentation](https://idris2.readthedocs.io)
 - [Zig Documentation](https://ziglang.org/documentation/master/)
-- [Rhodium Standard Repositories](https://github.com/{{OWNER}}/rhodium-standard-repositories)
+- [Rhodium Standard Repositories](https://github.com/hyperpolymath/rhodium-standard-repositories)
 - [FFI Migration Guide](../ffi-migration-guide.md)
 - [ABI Migration Guide](../abi-migration-guide.md)
