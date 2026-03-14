@@ -5,36 +5,54 @@
 :toc: macro
 :toclevels: 3
 
-A Vite plugin for first-class ReScript support with HMR, compiler integration,
-error overlay, and optional BoJ (Bundle of Joy) build orchestration via the
-ssg-mcp cartridge.
+The definitive Vite plugin for ReScript -- zero-config, all known pain points
+solved. HMR, compiler integration, error overlay, PascalCase resolution,
+auto optimizeDeps, rewatch support, rescript.json auto-detection, and optional
+BoJ build orchestration.
 
 toc::[]
 
 == What is rescript-vite?
 
-rescript-vite integrates the ReScript compiler into Vite's build pipeline.
-It automatically spawns the ReScript compiler in build or watch mode, tracks
-compiled `.res.js` output files for hot module replacement (HMR), and forwards
-compiler diagnostics to Vite's error overlay. When a BoJ server is available,
-it can delegate builds to the ssg-mcp cartridge for caching, telemetry, and
-orchestrated compilation.
+rescript-vite integrates the ReScript compiler into Vite's build pipeline
+with *zero configuration*. It reads your `rescript.json`, auto-detects your
+suffix and module format, excludes `@rescript/*` packages from pre-bundling,
+resolves PascalCase modules on case-sensitive filesystems, ignores build
+artifacts in the watcher, spawns the compiler in the right mode, and forwards
+diagnostics to Vite's error overlay. It Just Works.
 
 === Features
 
+* *Zero config* -- `plugins: [rescriptPlugin()]` and you're done. Everything
+  is auto-detected from `rescript.json`.
+* *PascalCase module resolution* -- fixes the #1 Linux pain point where
+  ReScript emits lowercase imports but actual files are PascalCase on disk.
+* *Auto `optimizeDeps` exclusion* -- `@rescript/core`, `@rescript/runtime`,
+  `@rescript/react`, and `rescript` are excluded from Vite's dependency
+  pre-bundling, which breaks on their subpath exports.
+* *Build artifact watcher ignore* -- `.ast`, `.cmj`, `.cmi`, `.cmt`, and
+  `lib/` directories are ignored to prevent spurious reload loops.
+* *rescript.json auto-detection* -- reads your suffix (`.res.js` vs `.res.mjs`),
+  module format (`esmodule` vs `commonjs`), and `in-source` setting automatically.
+* *Rewatch support* -- auto-detects `rewatch` binary (ReScript 12+) and uses
+  native `rewatch watch`/`rewatch build` commands.
 * *Automatic compiler management* -- spawns `rescript build` (one-shot) or
-  `rescript build -w` (watch mode) depending on whether Vite is in `build`
-  or `serve` mode.
-* *HMR for .res files* -- detects recompiled `.res.js` files and triggers
+  `rescript build -w` / `rewatch watch` depending on whether Vite is in
+  `build` or `serve` mode.
+* *HMR for .res files* -- detects recompiled output files and triggers
   hot module replacement in the browser.
 * *Error overlay integration* -- pushes ReScript compiler errors to Vite's
   built-in error overlay with file, line, and column info.
-* *Diagnostic parsing* -- parses ReScript compiler output including ANSI
-  escape codes, extracting structured diagnostic objects.
+* *ANSI color forwarding* -- sets `NINJA_ANSI_FORCED=1` for colored compiler
+  output in the terminal.
+* *In-source: false support* -- correctly maps `.res` files to compiled output
+  in `lib/es6/` or `lib/js/` for out-of-source compilation.
 * *Deno compatible* -- auto-detects the Deno runtime and adjusts compiler
   invocation accordingly.
 * *BoJ build orchestration* -- optionally delegates builds to a running
   BoJ ssg-mcp cartridge for incremental builds, caching, and telemetry.
+* *All features toggleable* -- `autoOptimizeDeps`, `autoResolve`,
+  `autoIgnoreArtifacts` can be individually disabled if needed.
 * *panic-attacker compatible* -- diagnostic format maps cleanly to SARIF-style
   output used by panic-attacker weak-point scanning.
 
@@ -160,6 +178,31 @@ Creates a Vite plugin instance. Returns a standard Vite plugin object with
 |`"silent" \| "info" \| "verbose"`
 |Controls console output verbosity.
 |`"info"`
+
+|`suffix`
+|`string`
+|Output suffix override (e.g., `".res.mjs"`). Auto-detected from `rescript.json`.
+|Auto-detected
+
+|`useRewatch`
+|`boolean`
+|Use `rewatch` instead of `rescript build -w` for watch mode.
+|Auto-detected (checks for `rewatch` binary)
+
+|`autoOptimizeDeps`
+|`boolean`
+|Auto-exclude `@rescript/*` packages from Vite's dependency pre-bundling.
+|`true`
+
+|`autoResolve`
+|`boolean`
+|Auto-resolve PascalCase module imports on case-sensitive filesystems (Linux).
+|`true`
+
+|`autoIgnoreArtifacts`
+|`boolean`
+|Auto-ignore ReScript build artifacts (`.ast`, `.cmj`, `.cmi`, `.cmt`, `lib/`) in Vite's file watcher.
+|`true`
 |===
 
 === Default export
@@ -171,6 +214,25 @@ The module's default export is a plugin instance created with default options:
 import rescriptPlugin from "rescript-vite";
 // Equivalent to: make()
 ----
+
+=== `rescript-vite/config` (RescriptConfig)
+
+The config reader is available as a separate export for direct use:
+
+[source,javascript]
+----
+import { read, getOutputPath, defaultRescriptConfig } from "rescript-vite/config";
+
+const config = read(".");
+console.log(config.suffix);       // ".res.js" or ".res.mjs"
+console.log(config.packageSpec);  // { moduleFormat: "esmodule", inSource: true }
+----
+
+==== RescriptConfig API
+
+* `read(projectRoot)` -- Read `rescript.json` or `bsconfig.json` from a directory. Returns parsed config or defaults.
+* `getOutputPath(config, resFile)` -- Get the compiled output path for a `.res` file (handles in-source and out-of-source).
+* `defaultRescriptConfig` -- Default configuration when no `rescript.json` is found.
 
 === `rescript-vite/boj` (BojBridge)
 

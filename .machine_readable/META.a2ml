@@ -1,38 +1,43 @@
 # SPDX-License-Identifier: PMPL-1.0-or-later
-# Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}>
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # META.a2ml — Project meta-level information
-# Architecture decisions, design rationale, governance.
 
 [metadata]
-version = "0.1.0"
-last-updated = "{{CURRENT_DATE}}"
+version = "0.2.0"
+last-updated = "2026-03-14"
 
 [project-info]
-type = "{{PROJECT_TYPE}}"  # library | binary | monorepo | service | website
-languages = []             # e.g. ["rust", "zig", "idris2"]
+type = "library"
+languages = ["rescript", "javascript"]
 license = "PMPL-1.0-or-later"
-author = "{{AUTHOR}} ({{OWNER}})"
+author = "Jonathan D.A. Jewell (hyperpolymath)"
 
 [architecture-decisions]
-# ADR format: status = proposed | accepted | deprecated | superseded | rejected
-# - { id = "ADR-001", title = "Use Zig for FFI", status = "accepted", date = "2026-02-14" }
+decisions = [
+  { id = "ADR-001", title = "Write plugin in ReScript (not JS/TS)", status = "accepted", date = "2026-03-09", rationale = "Dogfood our own language. Compiles to clean JS that Vite consumes. Proves ReScript works for tooling." },
+  { id = "ADR-002", title = "Auto-detect rescript.json settings", status = "accepted", date = "2026-03-14", rationale = "Zero-config by default. Read suffix, module format, in-source from rescript.json so users never have to configure manually." },
+  { id = "ADR-003", title = "PascalCase resolver built into plugin", status = "accepted", date = "2026-03-14", rationale = "Linux case-sensitivity is the #1 pain point. Every ReScript+Vite user on Linux hits this. Bake it in rather than requiring separate workaround." },
+  { id = "ADR-004", title = "All features on by default, toggleable off", status = "accepted", date = "2026-03-14", rationale = "Solve problems without asking. Users who need fine control can disable autoOptimizeDeps, autoResolve, autoIgnoreArtifacts individually." },
+  { id = "ADR-005", title = "Optional BoJ integration via probe", status = "accepted", date = "2026-03-09", rationale = "BoJ ssg-mcp cartridge provides build caching and telemetry. Probe on startup, fall back to direct compiler if unavailable. Never a hard dependency." },
+]
 
 [development-practices]
-build-tool = "just"
+build-tool = "deno"
 container-runtime = "podman"
 ci-platform = "github-actions"
-package-manager = "guix"  # guix | nix | cargo | mix
+package-manager = "deno"
 
 [release-policy]
 maintenance-hard-pass-required = true
-maintenance-hard-pass-command = "just maint-hard-pass"
+maintenance-hard-pass-command = "deno task test"
 maintenance-report-path = "reports/maintenance/latest.json"
 
-[maintenance-policy]
-permission-policy = "audit-first"
-permission-fix-mode = "opt-in"
-permission-ignore-file = ".maintenance-perms-ignore"
-
 [design-rationale]
-# Key design decisions and their reasoning
+# This plugin exists because the ReScript+Vite story was "functional but fragile":
+# - One dominant plugin (@jihchi) with known gaps (monorepo, rewatch, .res.mjs)
+# - HMR required .resi files and careful version management
+# - PascalCase resolution was a per-project workaround
+# - optimizeDeps exclusion was manual and easy to forget
+# - Build artifact watcher loops were common
+# rescript-vite solves ALL of these with zero configuration.

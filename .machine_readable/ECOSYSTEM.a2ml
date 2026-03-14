@@ -1,26 +1,37 @@
 # SPDX-License-Identifier: PMPL-1.0-or-later
-# Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} ({{OWNER}}) <{{AUTHOR_EMAIL}}>
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # ECOSYSTEM.a2ml — Project ecosystem position
-# Relationships, dependencies, integration points.
 
 [metadata]
-version = "0.1.0"
-last-updated = "{{CURRENT_DATE}}"
+version = "0.2.0"
+last-updated = "2026-03-14"
 
 [project]
-name = "{{PROJECT_NAME}}"
-purpose = "{{PROJECT_PURPOSE}}"
-role = "{{PROJECT_ROLE}}"  # e.g. ffi-infrastructure, cli-tool, library, service
+name = "rescript-vite"
+purpose = "Definitive Vite plugin for ReScript — zero-config, all pain points solved"
+role = "build-tooling"
 
 [position-in-ecosystem]
-tier = "infrastructure"  # 1 | 2 | infrastructure
+tier = "infrastructure"
 
 [related-projects]
-# relationship types: sibling-standard, dependency, dependent, inspiration, potential-consumer
-# - { name = "language-bridges", relationship = "sibling-standard" }
-# - { name = "hypatia", relationship = "potential-consumer" }
+projects = [
+  { name = "idaptik", relationship = "consumer", notes = "Primary dogfood project — 542 .res files, PixiJS game engine" },
+  { name = "idaptik-rescript13-staging", relationship = "consumer", notes = "ReScript 13 migration testing with .res.mjs suffix" },
+  { name = "dotmatrix-fileprinter", relationship = "consumer", notes = "Tauri 2 + ReScript + Vite" },
+  { name = "kaldor-iiot", relationship = "consumer", notes = "IIoT frontend with React + ReScript + Vite" },
+  { name = "lithoglyph/glyphbase/ui", relationship = "consumer", notes = "Database UI with React + Deno + Vite" },
+  { name = "boj-server", relationship = "integration", notes = "ssg-mcp cartridge for build orchestration" },
+  { name = "panll", relationship = "potential-consumer", notes = "Custom TEA framework, may use Vite" },
+  { name = "rsr-template-repo", relationship = "sibling-standard", notes = "Template should recommend rescript-vite for ReScript projects" },
+  { name = "developer-ecosystem/rescript-ecosystem", relationship = "parent-monorepo", notes = "Canonical monorepo location" },
+]
 
 [integration-points]
-# External systems this project connects to
-# - { system = "gitbot-fleet", direction = "outbound", protocol = "repository_dispatch" }
+integrations = [
+  { system = "vite", direction = "plugin", protocol = "vite-plugin-api" },
+  { system = "rescript-compiler", direction = "child-process", protocol = "cli-spawn" },
+  { system = "rewatch", direction = "child-process", protocol = "cli-spawn" },
+  { system = "boj-server", direction = "outbound", protocol = "json-rpc-2.0" },
+]

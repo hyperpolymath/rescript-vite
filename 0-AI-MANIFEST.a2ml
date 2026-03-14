@@ -1,19 +1,37 @@
-# ⚠️ STOP - CRITICAL READING REQUIRED
+# SPDX-License-Identifier: PMPL-1.0-or-later
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+
+# STOP - CRITICAL READING REQUIRED
 
 **THIS FILE MUST BE READ FIRST BY ALL AI AGENTS**
 
 ## WHAT IS THIS?
 
-This is the AI manifest for **[YOUR-REPO-NAME]**. It declares:
+This is the AI manifest for **rescript-vite**. It declares:
 - Canonical file locations (where things MUST be, and nowhere else)
 - Critical invariants (rules that must NEVER be violated)
 - Repository structure and organization
+
+## PROJECT OVERVIEW
+
+rescript-vite is a Vite plugin for first-class ReScript support. It solves
+every known pain point in the ReScript+Vite ecosystem:
+
+1. Automatic compiler management (build, watch, rewatch)
+2. HMR for .res files via compiled output tracking
+3. Error overlay integration with Vite's built-in overlay
+4. PascalCase module resolution for case-sensitive filesystems
+5. Auto optimizeDeps exclusion for @rescript/* packages
+6. Build artifact watcher ignore patterns
+7. rescript.json auto-detection (suffix, format, in-source)
+8. ANSI color forwarding for compiler output
+9. Optional BoJ ssg-mcp build orchestration
 
 ## CANONICAL LOCATIONS (UNIVERSAL RULE)
 
 ### Machine-Readable Metadata: `.machine_readable/` ONLY
 
-These 6 a2ml files MUST exist in `.machine_readable/` directory ONLY:
+These a2ml files MUST exist in `.machine_readable/` directory ONLY:
 1. **STATE.a2ml** - Project state, progress, blockers
 2. **META.a2ml** - Architecture decisions, governance
 3. **ECOSYSTEM.a2ml** - Position in ecosystem, relationships
@@ -23,112 +41,62 @@ These 6 a2ml files MUST exist in `.machine_readable/` directory ONLY:
 
 **CRITICAL:** If ANY of these files exist in the root directory, this is an ERROR.
 
-### Anchor File: `.machine_readable/anchors/ANCHOR.a2ml` ONLY
-
-Canonical authority and semantic-boundary declaration MUST exist at:
-
-` .machine_readable/anchors/ANCHOR.a2ml `
-
-Do not place `ANCHOR.a2ml` at repository root.
-
-### Bot Directives: `.machine_readable/bot_directives/` ONLY
-
-Bot-specific instructions for your automated agents. Example roles:
-- git-ops-bot - Git operations
-- quality-bot - Code quality
-- deps-bot - Dependency updates
-- docs-bot - Documentation
-- integration-bot - Integration
-- completion-bot - Task completion
-
-### Contractiles: `.machine_readable/contractiles/` ONLY
-
-Policy enforcement contracts:
-- k9 - Operational constraints (Nickel)
-- dust - Rollback and recovery semantics
-- lust - Future intent and roadmap direction
-- must - Required invariants and validations
-- trust - Cryptographic verification (Haskell)
-
-### Agent Instructions
-
-- `.claude/CLAUDE.md` - Claude-specific patterns (if exists)
-- `0-AI-MANIFEST.a2ml` - THIS FILE (universal entry point)
-
 ## CORE INVARIANTS
 
-1. **No state file duplication** - Root must NOT contain STATE.a2ml, META.a2ml, etc.
-2. **Single source of truth** - `.machine_readable/` is authoritative
-3. **No stale metadata** - If root state files exist, they are OUT OF DATE
-4. **License consistency** - All code PMPL-1.0-or-later unless platform requires MPL-2.0
-5. **Author attribution** - Always "{{AUTHOR}} <{{AUTHOR_EMAIL}}>"
+1. **Written in ReScript** - The plugin itself is written in ReScript, not TypeScript or JavaScript
+2. **Zero config by default** - `plugins: [rescriptPlugin()]` must work without options
+3. **All features toggleable** - autoOptimizeDeps, autoResolve, autoIgnoreArtifacts can be disabled
+4. **Deno first** - Deno is the primary runtime; npm/npx is fallback
+5. **BoJ is optional** - Never a hard dependency; probe and fall back gracefully
+6. **No banned languages** - No TypeScript, no Python, no Go in this repo
+7. **License** - PMPL-1.0-or-later (no AGPL)
 
 ## REPOSITORY STRUCTURE
 
-<!-- CUSTOMIZE THIS SECTION FOR YOUR REPO -->
-
-This repo contains:
-
 ```
-[YOUR-REPO-NAME]/
+rescript-vite/
 ├── 0-AI-MANIFEST.a2ml         # THIS FILE (start here)
-├── README.md                   # Project overview
-├── [your source files]         # Main code
+├── README.adoc                # Project overview and API docs
+├── TOPOLOGY.md                # Architecture diagram + completion dashboard
+├── CHANGELOG.md               # Version history
+├── package.json               # npm package manifest (v0.2.0)
+├── deno.json                  # Deno tasks and imports
+├── rescript.json              # ReScript compiler config
+├── src/
+│   ├── VitePluginRescript.res  # Main plugin (config, resolveId, HMR, overlay)
+│   ├── ViteTypes.res           # Vite plugin API type bindings
+│   ├── RescriptCompiler.res    # Compiler process bridge (build, watch, rewatch)
+│   ├── RescriptConfig.res      # rescript.json auto-detection and parsing
+│   └── BojBridge.res           # Optional BoJ ssg-mcp integration
+├── tests/
+│   ├── vite_plugin_test.js     # Plugin hook tests (19 tests)
+│   ├── rescript_compiler_test.js # Diagnostic parsing + buildCommand tests (20 tests)
+│   ├── rescript_config_test.js # Config auto-detection tests (10 tests)
+│   ├── boj_bridge_test.js      # BoJ bridge tests (9 tests)
+│   ├── panic_attack_test.js    # SARIF compatibility tests (10 tests)
+│   └── bench_test.js           # Performance benchmarks
+├── src/abi/                    # Idris2 ABI definitions (standard)
+├── ffi/zig/                    # Zig FFI implementation (standard)
 └── .machine_readable/          # ALL machine-readable content
-    ├── STATE.a2ml              # Project state, progress, blockers
-    ├── META.a2ml               # Architecture decisions, governance
-    ├── ECOSYSTEM.a2ml          # Ecosystem position, relationships
+    ├── STATE.a2ml              # Project state (90% complete, 68 tests)
+    ├── META.a2ml               # Architecture decisions (5 ADRs)
+    ├── ECOSYSTEM.a2ml          # Ecosystem position (9 consumers)
     ├── AGENTIC.a2ml            # AI agent interaction patterns
     ├── NEUROSYM.a2ml           # Neurosymbolic integration config
-    ├── PLAYBOOK.a2ml           # Operational runbook
-    ├── bot_directives/         # Per-bot rules and constraints
-    └── contractiles/           # Policy enforcement contracts (k9, dust, lust, must, trust)
+    └── PLAYBOOK.a2ml           # Operational runbook
 ```
 
 ## SESSION STARTUP CHECKLIST
 
-✅ Read THIS file (0-AI-MANIFEST.a2ml) first
-✅ Understand canonical location: `.machine_readable/` (state, anchors, bots, contractiles)
-✅ Know the invariants (no state file duplication, etc.)
-✅ Check for MCP enforcement (if applicable)
-✅ Read `.machine_readable/STATE.a2ml` for current status
-✅ Read `.machine_readable/AGENTIC.a2ml` for interaction patterns
-
-## LIFECYCLE HOOKS
-
-### on-enter (Session Start)
-
-When starting a new session:
-
-1. Read and acknowledge this manifest
-2. Log session start (optional but recommended)
-   - Format: `[YYYY-MM-DD HH:MM:SS] Session started: [agent-name]`
-   - Location: `.machine_readable/session-log.txt`
-3. Read `.machine_readable/STATE.a2ml`
-4. Check for blockers
-5. State understanding of canonical locations
-
-### on-exit (Session End)
-
-When ending a session:
-
-1. Update `.machine_readable/STATE.a2ml` if changes made
-2. Log session end (optional but recommended)
-   - Format: `[YYYY-MM-DD HH:MM:SS] Session ended: [summary]`
-   - Location: `.machine_readable/session-log.txt`
-3. Document new blockers
-4. Summarize outcomes
-
-## ATTESTATION PROOF
-
-After reading this file, demonstrate understanding by stating:
-
-**"I have read the AI manifest. All machine-readable content (state files, anchors, bot directives, contractiles) is located in `.machine_readable/` ONLY, and I will not create duplicate files in the root directory."**
+1. Read THIS file (0-AI-MANIFEST.a2ml) first
+2. Read `.machine_readable/STATE.a2ml` for current status
+3. Run `deno task res:build` to verify compilation (62 modules, 0 errors)
+4. Run `deno task test` to verify tests (68 tests, 0 failures)
 
 ## META
 
 - **Format Version:** 1.0.0
-- **Created:** [DATE]
-- **Maintained By:** [YOUR-NAME/ORG]
+- **Created:** 2026-03-09
+- **Last Updated:** 2026-03-14
+- **Maintained By:** Jonathan D.A. Jewell (hyperpolymath)
 - **License:** PMPL-1.0-or-later
-- **Protocol:** https://github.com/{{OWNER}}/0-ai-gatekeeper-protocol
