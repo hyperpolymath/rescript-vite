@@ -10,7 +10,7 @@ This document lists the current and former maintainers of **rescript-vite**.
 
 | Name | GitHub | Role | Since |
 |------|--------|------|-------|
-| Jonathan D.A. Jewell | [@hyperpolymath](https://github.com/hyperpolymath) | BDFL | {{CURRENT_DATE}} |
+| Jonathan D.A. Jewell | [@hyperpolymath](https://github.com/hyperpolymath) | BDFL | 2026-03-16 |
 
 ---
 

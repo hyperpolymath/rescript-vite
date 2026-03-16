@@ -8,8 +8,8 @@ Replace all {{PLACEHOLDER}} values with your information:
   rescript-vite     - Your project name
   hyperpolymath            - GitHub username or org (e.g., hyperpolymath)
   rescript-vite             - Repository name
-  {{SECURITY_EMAIL}}   - Security contact email
-  {{PGP_FINGERPRINT}}  - Your PGP key fingerprint (40 chars, no spaces)
+  6759885+hyperpolymath@users.noreply.github.com   - Security contact email
+  [PGP fingerprint not set]  - Your PGP key fingerprint (40 chars, no spaces)
   {{PGP_KEY_URL}}      - URL to your public PGP key
   {{WEBSITE}}          - Your website/domain
   2026     - Current year for copyright
@@ -58,19 +58,19 @@ If you cannot use GitHub Security Advisories, you may email us directly:
 
 | | |
 |---|---|
-| **Email** | {{SECURITY_EMAIL}} |
+| **Email** | 6759885+hyperpolymath@users.noreply.github.com |
 | **PGP Key** | [Download Public Key]({{PGP_KEY_URL}}) |
-| **Fingerprint** | `{{PGP_FINGERPRINT}}` |
+| **Fingerprint** | `[PGP fingerprint not set]` |
 
 ```bash
 # Import our PGP key
 curl -sSL {{PGP_KEY_URL}} | gpg --import
 
 # Verify fingerprint
-gpg --fingerprint {{SECURITY_EMAIL}}
+gpg --fingerprint 6759885+hyperpolymath@users.noreply.github.com
 
 # Encrypt your report
-gpg --armor --encrypt --recipient {{SECURITY_EMAIL}} report.txt
+gpg --armor --encrypt --recipient 6759885+hyperpolymath@users.noreply.github.com report.txt
 ```
 
 > **⚠️ Important:** Do not report security vulnerabilities through public GitHub issues, pull requests, discussions, or social media.
@@ -383,7 +383,7 @@ When using rescript-vite, we recommend:
 
 | Purpose | Contact |
 |---------|---------|
-| **Security issues** | [Report via GitHub](https://github.com/hyperpolymath/rescript-vite/security/advisories/new) or {{SECURITY_EMAIL}} |
+| **Security issues** | [Report via GitHub](https://github.com/hyperpolymath/rescript-vite/security/advisories/new) or 6759885+hyperpolymath@users.noreply.github.com |
 | **General questions** | [GitHub Discussions](https://github.com/hyperpolymath/rescript-vite/discussions) |
 | **Other enquiries** | See [README](README.md) for contact information |
 
