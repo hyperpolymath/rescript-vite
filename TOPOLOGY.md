@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: PMPL-1.0-or-later -->
 <!-- TOPOLOGY.md — rescript-vite architecture map and completion dashboard -->
-<!-- Last updated: 2026-03-14 -->
+<!-- Last updated: 2026-03-16 -->
 
 # rescript-vite — Project Topology
 
@@ -11,6 +11,9 @@
                      │              USER'S PROJECT                 │
                      │   vite.config.js:                           │
                      │     plugins: [rescriptPlugin()]             │
+                     │     // or: makeWithAdapters({               │
+                     │     //   adapters: [affinescriptAdapter()]  │
+                     │     // })                                   │
                      └──────────────────┬──────────────────────────┘
                                         │
                      ┌──────────────────▼──────────────────────────┐
@@ -18,34 +21,61 @@
                      │                                              │
                      │  ┌─────────────┐  ┌──────────────────────┐  │
                      │  │ config()    │  │ resolveId()          │  │
-                     │  │ Auto-setup  │  │ PascalCase resolver  │  │
-                     │  │ optimizeDeps│  │ Linux case-fix       │  │
-                     │  │ watcher ign │  │ .res.js/.res.mjs     │  │
-                     │  └──────┬──────┘  └──────────┬───────────┘  │
+                     │  │ Merge all   │  │ Try ReScript pascal  │  │
+                     │  │ adapter     │  │ Then try each adapter│  │
+                     │  │ excludes &  │  │ resolveImport()      │  │
+                     │  │ ignores     │  └──────────┬───────────┘  │
+                     │  └──────┬──────┘             │               │
                      │         │                    │               │
                      │  ┌──────▼──────┐  ┌──────────▼───────────┐  │
                      │  │ buildStart()│  │ handleHotUpdate()    │  │
-                     │  │ Spawn       │  │ .res -> .res.js map  │  │
-                     │  │ compiler    │  │ HMR module lookup    │  │
-                     │  │ (build/     │  │ Error overlay push   │  │
-                     │  │  watch/     │  │ Diagnostic clear     │  │
-                     │  │  rewatch)   │  └──────────────────────┘  │
+                     │  │ Start all   │  │ Find adapter by ext  │  │
+                     │  │ compilers   │  │ Map to compiled      │  │
+                     │  │ (ReScript + │  │ output, HMR/overlay  │  │
+                     │  │  adapters)  │  └──────────────────────┘  │
                      │  └──────┬──────┘                             │
                      └─────────│───────────────────────────────────┘
                                │
-              ┌────────────────┼────────────────┐
-              │                │                │
-    ┌─────────▼──────┐ ┌──────▼───────┐ ┌──────▼───────┐
-    │ RescriptConfig │ │ Rescript     │ │ BojBridge    │
-    │                │ │ Compiler     │ │ (optional)   │
-    │ Read           │ │              │ │              │
-    │ rescript.json  │ │ Spawn child  │ │ JSON-RPC 2.0 │
-    │ Auto-detect:   │ │ process      │ │ to ssg-mcp   │
-    │ - suffix       │ │ Parse diags  │ │ cartridge    │
-    │ - format       │ │ Track files  │ │ Build cache  │
-    │ - in-source    │ │ Rewatch      │ │ Telemetry    │
-    │ - sources      │ │ support      │ │ Fallback     │
-    └────────────────┘ └──────────────┘ └──────────────┘
+         ┌─────────────────────┼─────────────────────┐
+         │                     │                     │
+         ▼                     ▼                     ▼
+  ┌──────────────┐   ┌──────────────────┐   ┌──────────────────┐
+  │LanguageAdapter│   │ ReScript         │   │ AffineScript     │
+  │  Protocol     │   │ (built-in)       │   │ Adapter          │
+  │               │   │                  │   │                  │
+  │ detect()      │   │ RescriptConfig   │   │ OCaml compiler   │
+  │ readConfig()  │   │ RescriptCompiler │   │ dune build       │
+  │ build()       │   │ PascalCase fix   │   │ .as -> .as.js    │
+  │ watch()       │   │ .res -> .res.js  │   │ WASM codegen     │
+  │ parseDiags()  │   └──────────────────┘   └──────────────────┘
+  │ resolveImport │
+  └──────┬────────┘
+         │
+         ▼
+  ┌──────────────┐
+  │ BojBridge    │
+  │ (optional)   │
+  │ JSON-RPC 2.0 │
+  │ ssg-mcp      │
+  └──────────────┘
+```
+
+## Module Dependency Graph
+
+```
+VitePluginRescript ──► LanguageAdapter (protocol types)
+        │         ──► RescriptConfig (config detection)
+        │         ──► RescriptCompiler (child process)
+        │         ──► BojBridge (optional orchestration)
+        │         ──► ViteTypes (Vite API bindings)
+        │
+RescriptAdapter ───► RescriptConfig
+                ──► RescriptCompiler
+                ──► VitePluginRescript (tryPascalCaseResolve)
+                ──► LanguageAdapter (implements protocol)
+
+AffineScriptAdapter ──► LanguageAdapter (implements protocol)
+                    ──► node:child_process (compiler bridge)
 ```
 
 ## Completion Dashboard
@@ -63,11 +93,19 @@ CORE PLUGIN
 
 AUTO-CONFIGURATION
   rescript.json auto-detection     ██████████ 100%    suffix, format, in-source
-  optimizeDeps exclusion           ██████████ 100%    @rescript/core, runtime, react
+  optimizeDeps exclusion           ██████████ 100%    merged across all adapters
   PascalCase module resolution     ██████████ 100%    resolveId hook, Linux fix
-  Build artifact watcher ignore    ██████████ 100%    .ast/.cmj/.cmi/.cmt/lib/
+  Build artifact watcher ignore    ██████████ 100%    merged across all adapters
   ANSI color forwarding            ██████████ 100%    NINJA_ANSI_FORCED=1
   In-source: false path remapping  ██████████ 100%    lib/es6/ -> src/ mapping
+
+LANGUAGE ADAPTER SYSTEM
+  LanguageAdapter protocol         ██████████ 100%    pluggable interface
+  RescriptAdapter                  ██████████ 100%    wraps existing modules
+  AffineScriptAdapter              ██████████ 100%    OCaml compiler bridge
+  Multi-adapter detection          ██████████ 100%    detectLanguage/detectAll
+  Merged config (excludes/ignores) ██████████ 100%    deduplication
+  Per-adapter HMR                  ██████████ 100%    extension-based routing
 
 OPTIONAL INTEGRATIONS
   BoJ ssg-mcp build orchestration  ██████████ 100%    JSON-RPC, probe, fallback
@@ -79,6 +117,7 @@ TESTING
   Config auto-detect tests         ██████████ 100%    10 tests
   BoJ bridge tests                 ██████████ 100%    9 tests
   panic-attack tests               ██████████ 100%    10 tests
+  Language adapter tests           ██████████ 100%    16 tests
 
 PUBLISHING
   npm publish                      ░░░░░░░░░░  0%    Not yet published
@@ -86,17 +125,7 @@ PUBLISHING
   Real-world integration test      █████░░░░░ 50%    Used in idaptik (manual)
 
 ─────────────────────────────────────────────────────────────────────────────
-OVERALL:                           █████████░ 90%    Core complete, publishing pending
-```
-
-## Key Dependencies
-
-```
-rescript.json ──► RescriptConfig ──► VitePluginRescript ──► Vite Pipeline
-                                          │
-                  RescriptCompiler ────────┤  (child process)
-                                          │
-                  BojBridge ──────────────┘  (optional JSON-RPC)
+OVERALL:                           █████████░ 95%    v1.0.0 — publishing pending
 ```
 
 ## Update Protocol

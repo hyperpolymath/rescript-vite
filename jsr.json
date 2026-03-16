@@ -1,12 +1,15 @@
 {
   "$schema": "https://jsr.io/schema/config-file.v1.json",
   "name": "@hyperpolymath/rescript-vite",
-  "version": "0.2.0",
-  "description": "Vite plugin for ReScript — first-class .res support with HMR, PascalCase resolution, auto optimizeDeps, rescript.json auto-detection, rewatch support, compiler integration, error overlay, and optional BoJ build orchestration",
+  "version": "1.0.0",
+  "description": "Language evangeliser Vite plugin — first-class .res and .as support with HMR, compiler integration, error overlay, multi-language adapter system, and optional BoJ build orchestration",
   "exports": {
     ".": "./src/VitePluginRescript.res.js",
     "./boj": "./src/BojBridge.res.js",
-    "./config": "./src/RescriptConfig.res.js"
+    "./config": "./src/RescriptConfig.res.js",
+    "./adapter": "./src/LanguageAdapter.res.js",
+    "./adapter/rescript": "./src/RescriptAdapter.res.js",
+    "./adapter/affinescript": "./src/AffineScriptAdapter.res.js"
   },
   "publish": {
     "include": [

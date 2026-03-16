@@ -5,56 +5,72 @@
 :toc: macro
 :toclevels: 3
 
-The definitive Vite plugin for ReScript -- zero-config, all known pain points
-solved. HMR, compiler integration, error overlay, PascalCase resolution,
-auto optimizeDeps, rewatch support, rescript.json auto-detection, and optional
-BoJ build orchestration.
+A language evangeliser Vite plugin with a pluggable adapter system. ReScript
+is the primary language with zero-config, all-pain-points-solved support.
+AffineScript is the secondary language. The adapter protocol is designed so
+that any language can be added, and the whole system integrates into PanLL's
+language development workspace.
 
 toc::[]
 
 == What is rescript-vite?
 
-rescript-vite integrates the ReScript compiler into Vite's build pipeline
-with *zero configuration*. It reads your `rescript.json`, auto-detects your
-suffix and module format, excludes `@rescript/*` packages from pre-bundling,
-resolves PascalCase modules on case-sensitive filesystems, ignores build
-artifacts in the watcher, spawns the compiler in the right mode, and forwards
-diagnostics to Vite's error overlay. It Just Works.
+rescript-vite started as the definitive Vite plugin for ReScript — zero-config,
+every known pain point solved. It has since evolved into a **multi-language
+evangeliser** with a pluggable adapter protocol.
+
+=== For ReScript users
+
+Just use it. Zero config. Everything is auto-detected.
+
+[source,javascript]
+----
+// vite.config.js
+import rescriptPlugin from "rescript-vite";
+export default { plugins: [rescriptPlugin()] };
+----
+
+=== For multi-language projects
+
+Add language adapters for projects that mix ReScript with AffineScript (or
+future languages):
+
+[source,javascript]
+----
+// vite.config.js
+import { makeWithAdapters } from "rescript-vite";
+import { make as affinescriptAdapter } from "rescript-vite/adapter/affinescript";
+
+export default {
+  plugins: [
+    makeWithAdapters({
+      adapters: [affinescriptAdapter()],
+    }),
+  ],
+};
+----
 
 === Features
 
-* *Zero config* -- `plugins: [rescriptPlugin()]` and you're done. Everything
+* *Zero config* — `plugins: [rescriptPlugin()]` and you're done. Everything
   is auto-detected from `rescript.json`.
-* *PascalCase module resolution* -- fixes the #1 Linux pain point where
+* *Multi-language support* — Pluggable adapter protocol. ReScript built-in,
+  AffineScript included, any language can be added.
+* *PascalCase module resolution* — Fixes the #1 Linux pain point where
   ReScript emits lowercase imports but actual files are PascalCase on disk.
-* *Auto `optimizeDeps` exclusion* -- `@rescript/core`, `@rescript/runtime`,
-  `@rescript/react`, and `rescript` are excluded from Vite's dependency
-  pre-bundling, which breaks on their subpath exports.
-* *Build artifact watcher ignore* -- `.ast`, `.cmj`, `.cmi`, `.cmt`, and
-  `lib/` directories are ignored to prevent spurious reload loops.
-* *rescript.json auto-detection* -- reads your suffix (`.res.js` vs `.res.mjs`),
-  module format (`esmodule` vs `commonjs`), and `in-source` setting automatically.
-* *Rewatch support* -- auto-detects `rewatch` binary (ReScript 12+) and uses
-  native `rewatch watch`/`rewatch build` commands.
-* *Automatic compiler management* -- spawns `rescript build` (one-shot) or
-  `rescript build -w` / `rewatch watch` depending on whether Vite is in
-  `build` or `serve` mode.
-* *HMR for .res files* -- detects recompiled output files and triggers
-  hot module replacement in the browser.
-* *Error overlay integration* -- pushes ReScript compiler errors to Vite's
-  built-in error overlay with file, line, and column info.
-* *ANSI color forwarding* -- sets `NINJA_ANSI_FORCED=1` for colored compiler
-  output in the terminal.
-* *In-source: false support* -- correctly maps `.res` files to compiled output
-  in `lib/es6/` or `lib/js/` for out-of-source compilation.
-* *Deno compatible* -- auto-detects the Deno runtime and adjusts compiler
-  invocation accordingly.
-* *BoJ build orchestration* -- optionally delegates builds to a running
-  BoJ ssg-mcp cartridge for incremental builds, caching, and telemetry.
-* *All features toggleable* -- `autoOptimizeDeps`, `autoResolve`,
-  `autoIgnoreArtifacts` can be individually disabled if needed.
-* *panic-attacker compatible* -- diagnostic format maps cleanly to SARIF-style
-  output used by panic-attacker weak-point scanning.
+* *Auto `optimizeDeps` exclusion* — Merged across all active language adapters.
+* *Build artifact watcher ignore* — Merged across all active adapters.
+* *rescript.json auto-detection* — Reads suffix, module format, in-source setting.
+* *Rewatch support* — Auto-detects `rewatch` binary (ReScript 12+).
+* *Automatic compiler management* — Spawns compilers for all active languages.
+* *HMR for all languages* — Routes file changes to the correct adapter by extension.
+* *Error overlay integration* — Pushes diagnostics from any adapter to Vite's overlay.
+* *ANSI color forwarding* — `NINJA_ANSI_FORCED=1` for colored output.
+* *In-source: false support* — Correctly maps out-of-source compilation.
+* *Deno compatible* — Auto-detects the Deno runtime.
+* *BoJ build orchestration* — Optionally delegates to a BoJ ssg-mcp cartridge.
+* *All features toggleable* — `autoOptimizeDeps`, `autoResolve`, `autoIgnoreArtifacts`.
+* *panic-attacker compatible* — Diagnostic format maps to SARIF output.
 
 == Installation
 
@@ -82,7 +98,7 @@ rescript-vite expects these as peer dependencies:
 
 == Usage
 
-=== Basic setup
+=== Basic setup (ReScript only)
 
 [source,javascript]
 ----
@@ -112,6 +128,24 @@ export default {
 };
 ----
 
+=== With AffineScript
+
+[source,javascript]
+----
+// vite.config.js
+import { makeWithAdapters } from "rescript-vite";
+import { make as affinescriptAdapter } from "rescript-vite/adapter/affinescript";
+
+export default {
+  plugins: [
+    makeWithAdapters({
+      adapters: [affinescriptAdapter()],
+      logLevel: "info",
+    }),
+  ],
+};
+----
+
 === With BoJ build orchestration
 
 [source,javascript]
@@ -130,16 +164,12 @@ export default {
 };
 ----
 
-When `boj: true` is set, the plugin probes the BoJ ssg-mcp endpoint at
-build start. If the server is reachable, production builds are delegated to
-it. If unreachable, the plugin falls back to direct compiler invocation.
-
 == API Reference
 
 === `make(options?)`
 
-Creates a Vite plugin instance. Returns a standard Vite plugin object with
-`name: "rescript-vite"` and `enforce: "pre"`.
+Creates a Vite plugin instance with ReScript support (and optional extra adapters).
+Returns a standard Vite plugin object with `name: "rescript-vite"` and `enforce: "pre"`.
 
 ==== Options
 
@@ -147,10 +177,15 @@ Creates a Vite plugin instance. Returns a standard Vite plugin object with
 |===
 |Option |Type |Description |Default
 
+|`adapters`
+|`LanguageAdapter.t[]`
+|Additional language adapters beyond the built-in ReScript support. Each adapter
+ teaches the plugin how to handle a different language.
+|`[]`
+
 |`boj`
 |`boolean`
-|Enable BoJ ssg-mcp build orchestration. The plugin probes the endpoint
- at build start and falls back to direct compilation if unavailable.
+|Enable BoJ ssg-mcp build orchestration.
 |`false`
 
 |`bojEndpoint`
@@ -160,13 +195,12 @@ Creates a Vite plugin instance. Returns a standard Vite plugin object with
 
 |`useDeno`
 |`boolean`
-|Use Deno to run the ReScript compiler (`deno run -A npm:rescript`).
+|Use Deno to run the ReScript compiler.
 |Auto-detected
 
 |`rescriptBin`
 |`string`
-|Path to the rescript binary. When set, the plugin invokes this binary
- directly instead of using `npx`.
+|Path to the rescript binary.
 |`undefined` (uses `npx`)
 
 |`compilerFlags`
@@ -181,99 +215,93 @@ Creates a Vite plugin instance. Returns a standard Vite plugin object with
 
 |`suffix`
 |`string`
-|Output suffix override (e.g., `".res.mjs"`). Auto-detected from `rescript.json`.
+|Output suffix override (e.g., `".res.mjs"`).
 |Auto-detected
 
 |`useRewatch`
 |`boolean`
 |Use `rewatch` instead of `rescript build -w` for watch mode.
-|Auto-detected (checks for `rewatch` binary)
+|Auto-detected
 
 |`autoOptimizeDeps`
 |`boolean`
-|Auto-exclude `@rescript/*` packages from Vite's dependency pre-bundling.
+|Auto-exclude packages from all active adapters from Vite's dependency pre-bundling.
 |`true`
 
 |`autoResolve`
 |`boolean`
-|Auto-resolve PascalCase module imports on case-sensitive filesystems (Linux).
+|Auto-resolve module imports (PascalCase for ReScript, adapter-specific for others).
 |`true`
 
 |`autoIgnoreArtifacts`
 |`boolean`
-|Auto-ignore ReScript build artifacts (`.ast`, `.cmj`, `.cmi`, `.cmt`, `lib/`) in Vite's file watcher.
+|Auto-ignore build artifacts from all active adapters in Vite's file watcher.
 |`true`
 |===
 
-=== Default export
+=== `makeWithAdapters(options?)`
 
-The module's default export is a plugin instance created with default options:
+Alias for `make` — identical function, named for clarity when using adapters.
+
+=== Package exports
+
+[cols="1,2"]
+|===
+|Export |Module
+
+|`rescript-vite`
+|Main plugin (`VitePluginRescript`)
+
+|`rescript-vite/config`
+|ReScript config reader (`RescriptConfig`)
+
+|`rescript-vite/boj`
+|BoJ bridge (`BojBridge`)
+
+|`rescript-vite/adapter`
+|Language adapter protocol (`LanguageAdapter`)
+
+|`rescript-vite/adapter/rescript`
+|ReScript adapter (`RescriptAdapter`)
+
+|`rescript-vite/adapter/affinescript`
+|AffineScript adapter (`AffineScriptAdapter`)
+|===
+
+== Language Adapter Protocol
+
+To add support for a new language, create a module implementing `LanguageAdapter.t`:
 
 [source,javascript]
 ----
-import rescriptPlugin from "rescript-vite";
-// Equivalent to: make()
+// my-language-adapter.js
+export function make() {
+  return {
+    id: "my-language",
+    displayName: "My Language",
+    extensions: [".ml"],
+    detect: (root) => { /* return config path or undefined */ },
+    readConfig: (root) => { /* return languageConfig */ },
+    defaultConfig: { language: "my-language", suffix: ".ml.js", ... },
+    getOutputPath: (config, sourceFile) => sourceFile + ".js",
+    build: async (root, config) => { /* return buildResult */ },
+    watch: (root, config) => { /* return { stop: () => {}, stopped: false } */ },
+    parseDiagnostics: (output) => { /* return diagnostic[] */ },
+    resolveImport: (source, importer, config) => undefined,
+    excludePackages: [],
+    artifactIgnorePatterns: ["**/_build/**"],
+  };
+}
 ----
 
-=== `rescript-vite/config` (RescriptConfig)
+=== Adapter lifecycle
 
-The config reader is available as a separate export for direct use:
-
-[source,javascript]
-----
-import { read, getOutputPath, defaultRescriptConfig } from "rescript-vite/config";
-
-const config = read(".");
-console.log(config.suffix);       // ".res.js" or ".res.mjs"
-console.log(config.packageSpec);  // { moduleFormat: "esmodule", inSource: true }
-----
-
-==== RescriptConfig API
-
-* `read(projectRoot)` -- Read `rescript.json` or `bsconfig.json` from a directory. Returns parsed config or defaults.
-* `getOutputPath(config, resFile)` -- Get the compiled output path for a `.res` file (handles in-source and out-of-source).
-* `defaultRescriptConfig` -- Default configuration when no `rescript.json` is found.
-
-=== `rescript-vite/boj` (BojBridge)
-
-The BoJ bridge is available as a separate export for direct use:
-
-[source,javascript]
-----
-import { make, probe, requestBuild, recentEvents, disconnect } from "rescript-vite/boj";
-
-const bridge = make("http://localhost:7077/mcp/ssg");
-const connected = await probe(bridge);
-----
-
-==== BojBridge API
-
-* `make(endpoint?)` -- Create a bridge instance (disconnected by default).
-* `probe(bridge)` -- Attempt to connect; returns `true` on success.
-* `isConnected(bridge)` -- Check connection state.
-* `requestBuild(bridge, request)` -- Send a build request via JSON-RPC.
-* `recentEvents(bridge, limit?)` -- Get recent telemetry events (default limit: 20).
-* `disconnect(bridge)` -- Disconnect the bridge.
-
-== BoJ Integration
-
-The plugin integrates with the *BoJ (Bundle of Joy)* server's `ssg-mcp`
-cartridge. BoJ is a multi-cartridge build orchestration system; the ssg-mcp
-cartridge handles static site generation and ReScript compilation with:
-
-* *Build caching* -- avoids redundant recompilation when source files
-  have not changed.
-* *Telemetry* -- records build events (duration, file count, cache hit rate,
-  diagnostic count) for monitoring and analysis.
-* *MCP protocol* -- communicates via JSON-RPC 2.0 over HTTP, calling the
-  `tools/call` method with the `ssg_build` tool name.
-
-When `boj: true` is set:
-
-1. On `buildStart`, the plugin probes `{bojEndpoint}/health`.
-2. If healthy, production builds are sent as `ssg_build` requests.
-3. If the BoJ request fails, the plugin falls back to direct `rescript build`.
-4. Telemetry events are recorded in the bridge for later inspection.
+1. **Detection** — `detect(root)` is called during `config` and `configResolved` hooks. If it returns a path, the adapter is activated.
+2. **Configuration** — `readConfig(root)` parses the language's config file.
+3. **Build** — `build(root, config)` runs a one-shot compile. `watch(root, config)` starts the compiler in watch mode.
+4. **HMR** — When a file matching the adapter's extensions changes, `getOutputPath` maps it to compiled output for Vite's module graph.
+5. **Resolution** — `resolveImport` is called for imports that ReScript's PascalCase resolver doesn't handle.
+6. **Cleanup** — Watch handles are stopped during `closeBundle`.
 
 == Development
 
@@ -281,22 +309,34 @@ When `boj: true` is set:
 
 [source,bash]
 ----
-deno task res:build
+just build
+# or: deno task res:build
 ----
 
 === Test
 
 [source,bash]
 ----
-deno task test
+just test
+# or: deno test --no-check --allow-all tests/
 ----
 
-=== Benchmarks
+=== Smoke test
 
 [source,bash]
 ----
-deno bench --no-check --allow-all tests/bench_test.js
+just test-smoke
 ----
+
+== Future: PanLL Integration
+
+This plugin is designed to become a PanLL panel for language development. The
+adapter protocol will be the standard way PanLL discovers and manages language
+toolchains across database, language, and protocol development workspaces.
+
+AffineScript will eventually split into a standalone `affinescript-vite` package,
+leaving `rescript-vite` as the ReScript-focused plugin with a shared adapter
+protocol published as a spec.
 
 == License
 

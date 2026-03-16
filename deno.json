@@ -1,10 +1,13 @@
 {
   "name": "@hyperpolymath/rescript-vite",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "exports": {
     ".": "./src/VitePluginRescript.res.js",
     "./boj": "./src/BojBridge.res.js",
-    "./config": "./src/RescriptConfig.res.js"
+    "./config": "./src/RescriptConfig.res.js",
+    "./adapter": "./src/LanguageAdapter.res.js",
+    "./adapter/rescript": "./src/RescriptAdapter.res.js",
+    "./adapter/affinescript": "./src/AffineScriptAdapter.res.js"
   },
   "publish": {
     "include": [

@@ -1,22 +1,58 @@
 // SPDX-License-Identifier: PMPL-1.0-or-later
-= YOUR Template Repo Roadmap
+= rescript-vite Roadmap
 
 == Current Status
 
-Initial development phase.
+v1.0.0 — Multi-language evangeliser with Vite integration.
 
 == Milestones
 
-=== v0.1.0 - Foundation
-* [ ] Core functionality
-* [ ] Basic documentation
-* [ ] CI/CD pipeline
+=== v0.1.0 - Foundation ✓
+* [x] Core Vite plugin (config, resolveId, buildStart, handleHotUpdate, buildEnd, closeBundle)
+* [x] ReScript compiler bridge (build + watch + rewatch)
+* [x] rescript.json auto-detection
+* [x] BoJ ssg-mcp integration
+* [x] Basic test suite
 
-=== v1.0.0 - Stable Release
-* [ ] Full feature set
-* [ ] Comprehensive tests
-* [ ] Production ready
+=== v0.2.0 - All Pain Points Solved ✓
+* [x] PascalCase module resolution (Linux fix)
+* [x] Auto optimizeDeps exclusion
+* [x] Build artifact watcher ignore
+* [x] Rewatch support (ReScript 12+)
+* [x] ANSI color forwarding
+* [x] In-source: false path remapping
+* [x] Deno compatibility
+* [x] All features toggleable
+* [x] 68 tests across 5 suites
+* [x] RSR compliance (contractiles, machine-readable state, SPDX headers)
+* [x] Idris2 ABI / Zig FFI standard structure
+
+=== v1.0.0 - Language Evangeliser Platform (current)
+* [x] Language adapter abstraction (pluggable language support)
+* [x] AffineScript language adapter (bridges to OCaml compiler)
+* [x] Generalised config detection (per-language config files)
+* [x] Multi-language diagnostic parsing
+* [x] CLAUDE.md with project-specific instructions
+* [x] All template placeholders resolved
+* [x] Working Justfile recipes
+* [ ] npm publish
+* [ ] JSR publish
+
+=== v1.1.0 - PanLL Integration
+* [ ] PanLL panel registration (database/language/protocol development)
+* [ ] Language adapter discovery protocol
+* [ ] Shared diagnostic format across PanLL panels
+* [ ] TEA framework integration for panel state
+
+=== v2.0.0 - AffineScript Standalone
+* [ ] AffineScript adapter extracts to own package
+* [ ] rescript-vite continues as ReScript-focused plugin
+* [ ] affinescript-vite becomes standalone with full WASM compilation support
+* [ ] Shared language adapter protocol published as spec
 
 == Future Directions
 
-_To be determined based on community feedback._
+* Additional language adapters (Gleam, Elixir, Idris2)
+* Language-agnostic playground integration
+* Cross-language type bridge (ReScript ↔ AffineScript interop)
+* PanLL workspace layer for multi-language projects

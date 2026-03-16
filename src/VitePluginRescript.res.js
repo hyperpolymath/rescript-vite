@@ -39,6 +39,24 @@ function hasRewatch(root) {
   return Nodefs.existsSync(Nodepath.join(root, "node_modules", ".bin/rewatch"));
 }
 
+function sendOverlayErrorFromAdapter(server, diagnostic) {
+  server.ws.send({
+    type: "error",
+    err: {
+      message: diagnostic.message,
+      stack: "",
+      id: diagnostic.file,
+      frame: diagnostic.file + `:` + diagnostic.line.toString() + `:` + diagnostic.column.toString(),
+      plugin: "rescript-vite",
+      loc: {
+        file: diagnostic.file,
+        line: diagnostic.line,
+        column: diagnostic.column
+      }
+    }
+  });
+}
+
 function sendOverlayError(server, diagnostic) {
   server.ws.send({
     type: "error",
@@ -110,6 +128,48 @@ function tryPascalCaseResolve(source, importer, suffix) {
   }
 }
 
+function findAdapterForFile(state, file) {
+  return state.activeAdapters.find(as_ => as_.adapter.extensions.some(ext => file.endsWith(ext)));
+}
+
+function allExcludePackages(state) {
+  let result = [];
+  let seen = {};
+  rescriptExcludePackages.forEach(pkg => {
+    seen[pkg] = true;
+    result.push(pkg);
+  });
+  state.activeAdapters.forEach(as_ => {
+    as_.adapter.excludePackages.forEach(pkg => {
+      if (!Stdlib_Option.getOr(seen[pkg], false)) {
+        seen[pkg] = true;
+        result.push(pkg);
+        return;
+      }
+    });
+  });
+  return result;
+}
+
+function allArtifactPatterns(state) {
+  let result = [];
+  let seen = {};
+  artifactIgnorePatterns.forEach(pat => {
+    seen[pat] = true;
+    result.push(pat);
+  });
+  state.activeAdapters.forEach(as_ => {
+    as_.adapter.artifactIgnorePatterns.forEach(pat => {
+      if (!Stdlib_Option.getOr(seen[pat], false)) {
+        seen[pat] = true;
+        result.push(pat);
+        return;
+      }
+    });
+  });
+  return result;
+}
+
 function make(optionsOpt) {
   let options = optionsOpt !== undefined ? Primitive_option.valFromOption(optionsOpt) : undefined;
   let opts = Stdlib_Option.getOr(options, {
@@ -123,21 +183,24 @@ function make(optionsOpt) {
     useRewatch: undefined,
     autoOptimizeDeps: undefined,
     autoResolve: undefined,
-    autoIgnoreArtifacts: undefined
+    autoIgnoreArtifacts: undefined,
+    adapters: undefined
   });
   let logLevel = Stdlib_Option.getOr(opts.logLevel, "info");
   let useDeno = Stdlib_Option.getOr(opts.useDeno, isDeno());
   let wantAutoOptimize = Stdlib_Option.getOr(opts.autoOptimizeDeps, true);
   let wantAutoResolve = Stdlib_Option.getOr(opts.autoResolve, true);
   let wantAutoIgnore = Stdlib_Option.getOr(opts.autoIgnoreArtifacts, true);
+  let extraAdapters = Stdlib_Option.getOr(opts.adapters, []);
   let state = {
-    config: undefined,
-    watchHandle: undefined,
+    viteConfig: undefined,
     bojBridge: undefined,
     pendingHmrFiles: [],
-    lastBuildSuccess: true,
+    activeAdapters: [],
+    rescriptConfig: RescriptConfig.defaultRescriptConfig,
+    watchHandle: undefined,
     diagnostics: [],
-    rescriptConfig: RescriptConfig.defaultRescriptConfig
+    lastBuildSuccess: true
   };
   return {
     name: "rescript-vite",
@@ -150,39 +213,48 @@ function make(optionsOpt) {
           rescriptCfg.packageSpec.inSource ? "true" : "false"
         ) + `)`);
       }
-      if (wantAutoOptimize || wantAutoIgnore) {
-        return ((function() {
-          var cfg = {};
-
-          // Auto-exclude @rescript/* from dependency pre-bundling
-          if (wantAutoOptimize) {
-            cfg.optimizeDeps = {
-              exclude: ["@rescript/core", "@rescript/runtime", "@rescript/react", "rescript"]
-            };
+      extraAdapters.forEach(adapter => {
+        let configPath = adapter.detect(".");
+        if (configPath === undefined) {
+          if (logLevel === "verbose") {
+            return log(logLevel, "\x1b[36mi\x1b[0m", adapter.displayName + ` not detected in project`);
+          } else {
+            return;
           }
-
-          // Auto-ignore build artifacts in file watcher
-          if (wantAutoIgnore) {
+        }
+        let config = adapter.readConfig(".");
+        state.activeAdapters.push({
+          adapter: adapter,
+          config: config,
+          watchHandle: undefined,
+          diagnostics: [],
+          lastBuildSuccess: true
+        });
+        log(logLevel, "\x1b[36mi\x1b[0m", `Detected ` + adapter.displayName + ` (` + configPath + `)`);
+      });
+      let excludePkgs = allExcludePackages(state);
+      let ignorePats = allArtifactPatterns(state);
+      let buildConfigPatch = (function(autoOptimize, autoIgnore, pkgs, pats) {
+          var cfg = {};
+          if (autoOptimize) {
+            cfg.optimizeDeps = { exclude: pkgs };
+          }
+          if (autoIgnore) {
             cfg.server = cfg.server || {};
             cfg.server.watch = cfg.server.watch || {};
-            cfg.server.watch.ignored = [
-              "**/*.ast", "**/*.cmj", "**/*.cmi", "**/*.cmt",
-              "**/lib/bs/**", "**/lib/es6/**", "**/lib/js/**",
-              "**/lib/ocaml/**", "**/.merlin", "**/.bsb.lock"
-            ];
+            cfg.server.watch.ignored = pats;
           }
-
-          // Set NINJA_ANSI_FORCED for colored compiler output
           cfg.define = cfg.define || {};
-
           return cfg;
-        })());
+        });
+      if (wantAutoOptimize || wantAutoIgnore) {
+        return buildConfigPatch(wantAutoOptimize, wantAutoIgnore, excludePkgs, ignorePats);
       } else {
         return ({});
       }
     },
     configResolved: resolvedConfig => {
-      state.config = resolvedConfig;
+      state.viteConfig = resolvedConfig;
       let rescriptCfg = RescriptConfig.read(resolvedConfig.root);
       state.rescriptConfig = rescriptCfg;
       let s = opts.suffix;
@@ -197,14 +269,34 @@ function make(optionsOpt) {
           configPath: init.configPath
         };
       }
+      state.activeAdapters = [];
+      extraAdapters.forEach(adapter => {
+        let _configPath = adapter.detect(resolvedConfig.root);
+        if (_configPath === undefined) {
+          return;
+        }
+        let config = adapter.readConfig(resolvedConfig.root);
+        state.activeAdapters.push({
+          adapter: adapter,
+          config: config,
+          watchHandle: undefined,
+          diagnostics: [],
+          lastBuildSuccess: true
+        });
+      });
       log(logLevel, "\x1b[36mi\x1b[0m", `Project root: ` + resolvedConfig.root);
       log(logLevel, "\x1b[36mi\x1b[0m", `Mode: ` + resolvedConfig.command + ` (` + resolvedConfig.mode + `)`);
       log(logLevel, "\x1b[36mi\x1b[0m", `ReScript suffix: ` + state.rescriptConfig.suffix);
       if (!state.rescriptConfig.packageSpec.inSource) {
-        return log(logLevel, "\x1b[36mi\x1b[0m", `Out-of-source mode: compiled output in lib/` + (
+        log(logLevel, "\x1b[36mi\x1b[0m", `Out-of-source mode: compiled output in lib/` + (
           state.rescriptConfig.packageSpec.moduleFormat === "esmodule" ? "es6" : "js"
         ) + `/`);
       }
+      if (state.activeAdapters.length === 0) {
+        return;
+      }
+      let names = state.activeAdapters.map(as_ => as_.adapter.displayName).join(", ");
+      log(logLevel, "\x1b[36mi\x1b[0m", `Additional languages: ` + names);
     },
     configureServer: _server => ((process.env.NINJA_ANSI_FORCED = "1")),
     resolveId: wantAutoResolve ? async (source, importer) => {
@@ -218,9 +310,22 @@ function make(optionsOpt) {
             id: resolved
           };
         }
+        let result;
+        let i = 0;
+        while (i < state.activeAdapters.length && Stdlib_Option.isNone(result)) {
+          let as_ = state.activeAdapters[i];
+          let resolved$1 = as_.adapter.resolveImport(source, importer, as_.config);
+          if (resolved$1 !== undefined) {
+            result = Primitive_option.some({
+              id: resolved$1
+            });
+          }
+          i = i + 1 | 0;
+        };
+        return Stdlib_Option.getOr(result, undefined);
       } : undefined,
     buildStart: async () => {
-      let c = state.config;
+      let c = state.viteConfig;
       let root = c !== undefined ? c.root : ".";
       let wantBoj = Stdlib_Option.getOr(opts.boj, false);
       if (wantBoj) {
@@ -265,7 +370,7 @@ function make(optionsOpt) {
         onDiagnostic: compilerConfig_onDiagnostic,
         onFileChanged: compilerConfig_onFileChanged
       };
-      let c$1 = state.config;
+      let c$1 = state.viteConfig;
       let config = c$1 !== undefined ? c$1 : ({
           root: ".",
           command: "build",
@@ -275,7 +380,14 @@ function make(optionsOpt) {
         log(logLevel, "\x1b[36mi\x1b[0m", useRewatch ? "Starting rewatch..." : "Starting ReScript compiler in watch mode...");
         let handle = RescriptCompiler.watch(compilerConfig);
         state.watchHandle = handle;
-        return log(logLevel, "\x1b[32m+\x1b[0m", useRewatch ? "Rewatch active" : "ReScript watch mode active");
+        log(logLevel, "\x1b[32m+\x1b[0m", useRewatch ? "Rewatch active" : "ReScript watch mode active");
+        state.activeAdapters.forEach(as_ => {
+          log(logLevel, "\x1b[36mi\x1b[0m", `Starting ` + as_.adapter.displayName + ` watch mode...`);
+          let handle = as_.adapter.watch(root, as_.config);
+          as_.watchHandle = handle;
+          log(logLevel, "\x1b[32m+\x1b[0m", as_.adapter.displayName + ` watch mode active`);
+        });
+        return;
       }
       log(logLevel, "\x1b[36mi\x1b[0m", "Running ReScript build...");
       let bridge$1 = state.bojBridge;
@@ -290,59 +402,95 @@ function make(optionsOpt) {
         if (result !== undefined) {
           state.lastBuildSuccess = result.success;
           if (result.success) {
-            return log(logLevel, "\x1b[32m+\x1b[0m", `BoJ build complete (` + result.durationMs.toString() + `ms, ` + result.cacheHits.toString() + ` cache hits)`);
+            log(logLevel, "\x1b[32m+\x1b[0m", `BoJ build complete (` + result.durationMs.toString() + `ms, ` + result.cacheHits.toString() + ` cache hits)`);
           } else {
-            return log(logLevel, "\x1b[31mx\x1b[0m", `BoJ build failed (` + result.diagnosticCount.toString() + ` errors)`);
+            log(logLevel, "\x1b[31mx\x1b[0m", `BoJ build failed (` + result.diagnosticCount.toString() + ` errors)`);
+          }
+        } else {
+          log(logLevel, "\x1b[33m!\x1b[0m", "BoJ build request failed -- falling back to direct compiler");
+          let result$1 = await RescriptCompiler.build(compilerConfig);
+          state.lastBuildSuccess = result$1.success;
+          if (result$1.success) {
+            log(logLevel, "\x1b[32m+\x1b[0m", `Build complete (` + result$1.durationMs.toString() + `ms)`);
+          } else {
+            log(logLevel, "\x1b[31mx\x1b[0m", `Build failed (` + result$1.diagnostics.length.toString() + ` errors)`);
           }
         }
-        log(logLevel, "\x1b[33m!\x1b[0m", "BoJ build request failed -- falling back to direct compiler");
-        let result$1 = await RescriptCompiler.build(compilerConfig);
-        state.lastBuildSuccess = result$1.success;
-        if (result$1.success) {
-          return log(logLevel, "\x1b[32m+\x1b[0m", `Build complete (` + result$1.durationMs.toString() + `ms)`);
+      } else {
+        let result$2 = await RescriptCompiler.build(compilerConfig);
+        state.lastBuildSuccess = result$2.success;
+        if (result$2.success) {
+          log(logLevel, "\x1b[32m+\x1b[0m", `Build complete (` + result$2.durationMs.toString() + `ms)`);
         } else {
-          return log(logLevel, "\x1b[31mx\x1b[0m", `Build failed (` + result$1.diagnostics.length.toString() + ` errors)`);
+          log(logLevel, "\x1b[31mx\x1b[0m", `Build failed (` + result$2.diagnostics.length.toString() + ` errors)`);
         }
       }
-      let result$2 = await RescriptCompiler.build(compilerConfig);
-      state.lastBuildSuccess = result$2.success;
-      if (result$2.success) {
-        return log(logLevel, "\x1b[32m+\x1b[0m", `Build complete (` + result$2.durationMs.toString() + `ms)`);
-      } else {
-        return log(logLevel, "\x1b[31mx\x1b[0m", `Build failed (` + result$2.diagnostics.length.toString() + ` errors)`);
-      }
+      let adapterPromises = state.activeAdapters.map(async as_ => {
+        log(logLevel, "\x1b[36mi\x1b[0m", `Running ` + as_.adapter.displayName + ` build...`);
+        let result = await as_.adapter.build(root, as_.config);
+        as_.lastBuildSuccess = result.success;
+        as_.diagnostics = result.diagnostics;
+        if (result.success) {
+          return log(logLevel, "\x1b[32m+\x1b[0m", as_.adapter.displayName + ` build complete (` + result.durationMs.toString() + `ms)`);
+        } else {
+          return log(logLevel, "\x1b[31mx\x1b[0m", as_.adapter.displayName + ` build failed (` + result.diagnostics.length.toString() + ` errors)`);
+        }
+      });
+      await Promise.all(adapterPromises);
     },
     handleHotUpdate: ctx => {
       let file = ctx.file;
+      let adapterMatch = findAdapterForFile(state, file);
+      if (adapterMatch !== undefined) {
+        log(logLevel, "\x1b[36mi\x1b[0m", `[` + adapterMatch.adapter.displayName + `] File changed: ` + file);
+        let jsFile = adapterMatch.adapter.getOutputPath(adapterMatch.config, file);
+        let modules = ctx.server.moduleGraph.getModulesByFile(jsFile);
+        if (modules !== undefined && modules.length !== 0) {
+          if (adapterMatch.lastBuildSuccess) {
+            clearOverlay(ctx.server);
+          }
+          let errors = adapterMatch.diagnostics.filter(d => d.severity === "error");
+          if (errors.length !== 0) {
+            let err = errors[0];
+            if (err !== undefined) {
+              sendOverlayErrorFromAdapter(ctx.server, err);
+            }
+          }
+          adapterMatch.diagnostics = [];
+          return modules;
+        }
+        log(logLevel, "\x1b[36mi\x1b[0m", `Full reload for ` + file + ` (not in module graph)`);
+        return;
+      }
       if (!(file.endsWith(".res") || file.endsWith(".resi"))) {
         return;
       }
       log(logLevel, "\x1b[36mi\x1b[0m", `File changed: ` + file);
       let suffix = state.rescriptConfig.suffix;
-      let jsFile;
+      let jsFile$1;
       if (state.rescriptConfig.packageSpec.inSource) {
-        jsFile = file.endsWith(".resi") ? file.replace(".resi", suffix) : file.replace(".res", suffix);
+        jsFile$1 = file.endsWith(".resi") ? file.replace(".resi", suffix) : file.replace(".res", suffix);
       } else {
-        let c = state.config;
+        let c = state.viteConfig;
         let root = c !== undefined ? c.root : ".";
         let rel = Nodepath.relative(root, file);
         let outputPath = RescriptConfig.getOutputPath(state.rescriptConfig, rel);
-        jsFile = Nodepath.resolve(root, outputPath);
+        jsFile$1 = Nodepath.resolve(root, outputPath);
       }
-      let modules = ctx.server.moduleGraph.getModulesByFile(jsFile);
-      if (modules !== undefined && modules.length !== 0) {
+      let modules$1 = ctx.server.moduleGraph.getModulesByFile(jsFile$1);
+      if (modules$1 !== undefined && modules$1.length !== 0) {
         if (state.lastBuildSuccess) {
           clearOverlay(ctx.server);
         }
-        let errors = state.diagnostics.filter(d => d.severity === "Error");
-        if (errors.length !== 0) {
-          let err = errors[0];
-          if (err !== undefined) {
-            sendOverlayError(ctx.server, err);
+        let errors$1 = state.diagnostics.filter(d => d.severity === "Error");
+        if (errors$1.length !== 0) {
+          let err$1 = errors$1[0];
+          if (err$1 !== undefined) {
+            sendOverlayError(ctx.server, err$1);
           }
         }
         state.diagnostics = [];
-        return modules;
+        return modules$1;
       }
       log(logLevel, "\x1b[36mi\x1b[0m", `Full reload for ` + file + ` (not in module graph)`);
     },
@@ -350,12 +498,23 @@ function make(optionsOpt) {
       let errorCount = state.diagnostics.filter(d => d.severity === "Error").length;
       let warnCount = state.diagnostics.filter(d => d.severity === "Warning").length;
       if (errorCount > 0) {
-        return log(logLevel, "\x1b[31mx\x1b[0m", errorCount.toString() + ` errors, ` + warnCount.toString() + ` warnings`);
+        log(logLevel, "\x1b[31mx\x1b[0m", errorCount.toString() + ` errors, ` + warnCount.toString() + ` warnings`);
       } else if (warnCount > 0) {
-        return log(logLevel, "\x1b[33m!\x1b[0m", warnCount.toString() + ` warnings`);
+        log(logLevel, "\x1b[33m!\x1b[0m", warnCount.toString() + ` warnings`);
       } else {
-        return log(logLevel, "\x1b[32m+\x1b[0m", "No issues");
+        log(logLevel, "\x1b[32m+\x1b[0m", "No issues");
       }
+      state.activeAdapters.forEach(as_ => {
+        let eCount = as_.diagnostics.filter(d => d.severity === "error").length;
+        let wCount = as_.diagnostics.filter(d => d.severity === "warning").length;
+        if (eCount > 0) {
+          return log(logLevel, "\x1b[31mx\x1b[0m", `[` + as_.adapter.displayName + `] ` + eCount.toString() + ` errors, ` + wCount.toString() + ` warnings`);
+        } else if (wCount > 0) {
+          return log(logLevel, "\x1b[33m!\x1b[0m", `[` + as_.adapter.displayName + `] ` + wCount.toString() + ` warnings`);
+        } else {
+          return;
+        }
+      });
     },
     closeBundle: () => {
       let handle = state.watchHandle;
@@ -363,6 +522,14 @@ function make(optionsOpt) {
         RescriptCompiler.stop(handle);
         log(logLevel, "\x1b[36mi\x1b[0m", "ReScript watch mode stopped");
       }
+      state.activeAdapters.forEach(as_ => {
+        let handle = as_.watchHandle;
+        if (handle !== undefined) {
+          handle.stop();
+          handle.stopped = true;
+          return log(logLevel, "\x1b[36mi\x1b[0m", as_.adapter.displayName + ` watch mode stopped`);
+        }
+      });
       let bridge = state.bojBridge;
       if (bridge !== undefined) {
         BojBridge.disconnect(bridge);
@@ -374,6 +541,8 @@ function make(optionsOpt) {
 
 let $$default = make(Primitive_option.some(undefined));
 
+let makeWithAdapters = make;
+
 export {
   log,
   logInfo,
@@ -382,12 +551,17 @@ export {
   logErr,
   isDeno,
   hasRewatch,
+  sendOverlayErrorFromAdapter,
   sendOverlayError,
   clearOverlay,
   artifactIgnorePatterns,
   rescriptExcludePackages,
   tryPascalCaseResolve,
+  findAdapterForFile,
+  allExcludePackages,
+  allArtifactPatterns,
   make,
+  makeWithAdapters,
   $$default as default,
 }
 /* default Not a pure module */

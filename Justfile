@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: PMPL-1.0-or-later
-# Copyright (c) {{CURRENT_YEAR}} {{AUTHOR}} (hyperpolymath) <{{AUTHOR_EMAIL}}>
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
-# RSR Standard Justfile Template
+# rescript-vite Justfile
 # https://just.systems/man/en/
-#
-# Copy this file to new projects and customize the placeholder values.
 #
 # Run `just` to see all available recipes
 # Run `just cookbook` to generate docs/just-cookbook.adoc
@@ -17,9 +15,9 @@ set positional-arguments := true
 # Import auto-generated contractile recipes
 import? "contractile.just"
 
-# Project metadata — customize these
-project := "{{PROJECT_NAME}}"
-version := "0.1.0"
+# Project metadata
+project := "rescript-vite"
+version := "1.0.0"
 tier := "infrastructure"  # 1 | 2 | infrastructure
 maint_script := "scripts/maintenance/run-maintenance.sh"
 perms_script := "scripts/maintenance/perms-state.sh"
@@ -241,45 +239,28 @@ init:
 # BUILD & COMPILE
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Build the project (debug mode)
+# Build the project — compiles all .res sources to .res.js
 build *args:
-    @echo "Building {{project}} (debug)..."
-    # TODO: Replace with your build command
-    # Examples:
-    #   cargo build {{args}}                    # Rust
-    #   mix compile {{args}}                    # Elixir
-    #   zig build {{args}}                      # Zig
-    #   deno task build {{args}}                # Deno/ReScript
+    @echo "Building {{project}}..."
+    deno task res:build
     @echo "Build complete"
 
-# Build in release mode with optimizations
-build-release *args:
-    @echo "Building {{project}} (release)..."
-    # TODO: Replace with your release build command
-    # Examples:
-    #   cargo build --release {{args}}
-    #   MIX_ENV=prod mix compile {{args}}
-    #   zig build -Doptimize=ReleaseFast {{args}}
-    @echo "Release build complete"
+# Build in release mode (same as build — ReScript has no separate release mode)
+build-release *args: build
 
-# Build and watch for changes (requires entr or similar)
+# Build and watch for changes
 build-watch:
-    @echo "Watching for changes..."
-    # TODO: Customize file patterns for your language
-    # Examples:
-    #   find src -name '*.rs' | entr -c just build
-    #   mix compile --force --warnings-as-errors
-    #   deno task dev
+    deno task res:watch
 
 # Clean build artifacts [reversible: rebuild with `just build`]
 clean:
     @echo "Cleaning..."
-    # TODO: Customize for your build system
-    rm -rf target/ _build/ build/ dist/ out/ obj/ bin/
+    deno task res:clean
+    rm -rf lib/bs lib/es6 lib/js lib/ocaml
 
 # Deep clean including caches [reversible: rebuild]
 clean-all: clean
-    rm -rf .cache .tmp
+    rm -rf .cache .tmp node_modules
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TEST & QUALITY
@@ -287,24 +268,15 @@ clean-all: clean
 
 # Run all tests
 test *args:
-    @echo "Running tests..."
-    # TODO: Replace with your test command
-    # Examples:
-    #   cargo test {{args}}
-    #   mix test {{args}}
-    #   zig build test {{args}}
-    #   deno test {{args}}
-    @echo "Tests passed!"
+    deno test --no-check --allow-all tests/
 
 # Run tests with verbose output
 test-verbose:
-    @echo "Running tests (verbose)..."
-    # TODO: Replace with verbose test command
+    deno test --no-check --allow-all tests/ -- --verbose
 
-# Smoke test
+# Smoke test — verify the plugin module loads
 test-smoke:
-    @echo "Smoke test..."
-    # TODO: Add basic sanity checks
+    deno eval "import('./src/VitePluginRescript.res.js').then(m => { console.log('Plugin name:', m.default.name); console.log('Smoke test passed'); })"
 
 # Run all quality checks
 quality: fmt-check lint test
@@ -320,50 +292,32 @@ fix: fmt
 
 # Format all source files [reversible: git checkout]
 fmt:
-    @echo "Formatting source files..."
-    # TODO: Replace with your formatter
-    # Examples:
-    #   cargo fmt
-    #   mix format
-    #   gleam format
-    #   deno fmt
+    deno fmt src/ tests/ examples/
 
 # Check formatting without changes
 fmt-check:
-    @echo "Checking formatting..."
-    # TODO: Replace with your format check
-    # Examples:
-    #   cargo fmt --check
-    #   mix format --check-formatted
-    #   gleam format --check
+    deno fmt --check src/ tests/ examples/
 
 # Run linter
 lint:
-    @echo "Linting source files..."
-    # TODO: Replace with your linter
-    # Examples:
-    #   cargo clippy -- -D warnings
-    #   mix credo --strict
-    #   gleam check
+    deno lint src/ tests/
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # RUN & EXECUTE
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Run the application
+# Run the smoke test after building
 run *args: build
-    # TODO: Replace with your run command
-    echo "Run not configured yet"
+    just test-smoke
 
 # Run with verbose output
 run-verbose *args: build
-    # TODO: Replace with verbose run command
-    echo "Run not configured yet"
+    just test-verbose
 
-# Install to user path
+# Install — publish to JSR (Deno registry)
 install: build-release
-    @echo "Installing {{project}}..."
-    # TODO: Replace with your install command
+    @echo "Publishing {{project}} to JSR..."
+    deno publish
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # DEPENDENCIES
@@ -372,11 +326,8 @@ install: build-release
 # Install/check all dependencies
 deps:
     @echo "Checking dependencies..."
-    # TODO: Replace with your dependency check
-    # Examples:
-    #   cargo check
-    #   mix deps.get
-    #   gleam deps download
+    deno cache src/VitePluginRescript.res.js 2>/dev/null || true
+    @[ -d node_modules ] || deno install
     @echo "All dependencies satisfied"
 
 # Audit dependencies for vulnerabilities

@@ -1,14 +1,29 @@
 # SPDX-License-Identifier: PMPL-1.0-or-later
 # STATE.a2ml — Project state checkpoint
-# Converted from STATE.scm on 2026-03-15
+# Last updated: 2026-03-16
 
 [metadata]
 project = "rescript-vite"
-version = "0.1.0"
-last-updated = "2026-03-15"
+version = "1.0.0"
+last-updated = "2026-03-16"
 status = "active"
 
 [project-context]
 name = "rescript-vite"
-completion-percentage = 0
-phase = "In development"
+completion-percentage = 95
+phase = "v1.0.0 — language evangeliser with multi-adapter system"
+description = "Language evangeliser Vite plugin — ReScript primary, AffineScript secondary, pluggable adapter protocol for any language"
+
+[milestones]
+v0.1.0 = "complete"
+v0.2.0 = "complete"
+v1.0.0 = "current"
+
+[blockers]
+npm-publish = "Not yet published to npm"
+jsr-publish = "Not yet published to JSR"
+
+[next-actions]
+publish-npm = "Publish v1.0.0 to npm registry"
+publish-jsr = "Publish v1.0.0 to JSR (Deno registry)"
+panll-integration = "Register as PanLL language development panel"

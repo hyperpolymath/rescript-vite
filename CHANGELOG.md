@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-03-16
+
+### Added
+
+- **Language adapter protocol** (`LanguageAdapter.res`) — Pluggable interface for adding language support. Each adapter implements `detect`, `readConfig`, `build`, `watch`, `parseDiagnostics`, and `resolveImport`. Adapters compose: exclude packages and artifact patterns merge across all active adapters.
+- **ReScript adapter** (`RescriptAdapter.res`) — Wraps existing `RescriptCompiler` and `RescriptConfig` modules into the adapter protocol. PascalCase resolution included.
+- **AffineScript adapter** (`AffineScriptAdapter.res`) — Bridges the AffineScript OCaml compiler into Vite. Handles `.as` files, parses OCaml-style and structured error formats, supports dune-based watch mode.
+- **Multi-language HMR** — `handleHotUpdate` routes files to the correct adapter by extension. Each adapter has independent diagnostics and build state.
+- **Multi-language resolveId** — Tries ReScript PascalCase resolution first, then falls through to adapter-specific `resolveImport`.
+- **Multi-adapter build orchestration** — `buildStart` launches all adapter compilers in parallel (serve mode) or sequentially with Promise.all (build mode).
+- **`makeWithAdapters` export** — Convenience entry point for multi-language projects.
+- **`adapters` option** — Pass additional `LanguageAdapter.t` instances to the plugin constructor.
+- **Per-adapter state** — Each active adapter maintains its own `config`, `watchHandle`, `diagnostics`, and `lastBuildSuccess`.
+- **Merged Vite configuration** — `allExcludePackages` and `allArtifactPatterns` helpers deduplicate across all active adapters.
+- **CLAUDE.md** — Project-specific AI instructions for Claude Code.
+- **Language adapter tests** (`language_adapter_test.js`) — 16 tests covering adapter protocol, detection, composition, and AffineScript diagnostic parsing.
+
+### Changed
+
+- Plugin renamed conceptually from "Vite plugin for ReScript" to "Language evangeliser Vite plugin" — backward compatible, zero-config ReScript still works identically.
+- Internal state restructured: `pluginState` now has `activeAdapters: array<adapterState>` alongside legacy ReScript fields.
+- `config` hook now merges exclude packages and artifact patterns from all active adapters.
+- `configResolved` re-detects adapters with the actual project root.
+- `buildEnd` reports diagnostics summary per adapter.
+- `closeBundle` stops all adapter watch processes.
+- Version bumped to 1.0.0.
+- Package exports expanded: `./adapter`, `./adapter/rescript`, `./adapter/affinescript`.
+- Keywords updated: `affinescript`, `language-adapter`, `multi-language`, `panll`.
+
+### Fixed
+
+- All template placeholders resolved in Justfile (was `{{PROJECT_NAME}}`, `{{AUTHOR}}`, etc.).
+- All template placeholders resolved in `.devcontainer/devcontainer.json`.
+- ROADMAP.adoc rewritten from template boilerplate to actual project milestones.
+- Justfile build/test/lint/fmt/deps recipes now use actual Deno commands instead of TODO comments.
+- Removed `PLACEHOLDERS.md` (template cruft from RSR scaffold).
+
 ## [0.2.0] - 2026-03-14
 
 ### Added
