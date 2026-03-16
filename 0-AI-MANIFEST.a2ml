@@ -89,7 +89,7 @@ rescript-vite/
 ## SESSION STARTUP CHECKLIST
 
 1. Read THIS file (0-AI-MANIFEST.a2ml) first
-2. Read `.machine_readable/STATE.a2ml` for current status
+2. Read `.machine_readable/6a2/STATE.a2ml` for current status
 3. Run `deno task res:build` to verify compilation (62 modules, 0 errors)
 4. Run `deno task test` to verify tests (68 tests, 0 failures)
 
