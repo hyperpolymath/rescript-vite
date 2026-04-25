@@ -1,0 +1,57 @@
+Prosperity Public License 1.0.0
+
+This license applies to the rescript-vite project.
+It grants you freedom to use this software, provided you abide by its terms.
+
+§ 1. Permission
+
+This software is free software. You may copy, modify, and distribute copies of
+this software under the terms of this license, provided:
+
+  (A) You retain all copyright, patent, and other legal notices;
+  (B) You provide notice of changes;
+  (C) You do not misrepresent the origin of the work.
+
+§ 2. Limitations
+
+This software is provided "as-is", without warranty.
+
+Licensor grants no liability for damages, except where explicitly required by law.
+
+§ 3. Patent
+
+Any patent claims are licensed under the terms of this license.
+
+§ 4. Termination
+
+If you breach these terms, your license terminates immediately.
+
+§ 5. Proprietary Exceptions
+
+The terms of this license do not apply to:
+
+  (A) Patches, fixes, or modifications made and maintained by others for
+      interoperability or compatibility purposes;
+  (B) Reverse-engineering, decompiling, or disassembling solely for
+      interoperability;
+  (C) Fair use or fair dealing as permitted by law.
+
+§ 6. Legal Effect
+
+This license describes legal rights and obligations. Courts may interpret and
+enforce these provisions according to applicable law.
+
+---
+
+For full license text and conditions, see:
+https://prosperitylicense.com/
+
+FALLBACK LICENSE:
+
+Until PMPL achieves formal legal recognition, this software is licensed under
+the Mozilla Public License 2.0 (MPL-2.0), which is legally operative and
+recognized by OSI.
+
+See LICENSE-MPL-2.0 for the complete MPL-2.0 text.
+
+The intent is PMPL-1.0-or-later. The legal fallback is MPL-2.0.

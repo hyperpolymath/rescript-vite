@@ -1,0 +1,56 @@
+{
+  "name": "rescript-vite",
+  "version": "0.1.0",
+  "description": "Professional ReScript + Vite template for type-safe frontend development",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/rescript/index.d.ts",
+      "import": "./dist/rescript/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run rescript:watch\" \"vite\"",
+    "build": "npm run rescript:build && vite build",
+    "rescript:build": "rescript build",
+    "rescript:watch": "rescript build -w",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "fmt": "rescript format && prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
+    "check": "rescript && eslint src/"
+  },
+  "keywords": [
+    "rescript",
+    "vite",
+    "type-safe",
+    "frontend",
+    "build"
+  ],
+  "authors": [
+    "Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"
+  ],
+  "license": "PMPL-1.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hyperpolymath/rescript-developer-ecosystem"
+  },
+  "bugs": {
+    "url": "https://github.com/hyperpolymath/rescript-developer-ecosystem/issues"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "concurrently": "^8.2.0",
+    "eslint": "^8.54.0",
+    "prettier": "^3.1.0",
+    "rescript": "^11.0.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

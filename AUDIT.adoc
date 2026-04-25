@@ -1,0 +1,95 @@
+= AUDIT — Code Quality & Verification Checklist
+:toc: macro
+:toc-title: Contents
+
+toc::[]
+
+== Pre-Release Audit
+
+Before any release, verify:
+
+=== Code Quality
+
+- [ ] `npm run check` passes without errors
+- [ ] `npm test` has 100% test coverage
+- [ ] No `console.log` statements in production code
+- [ ] No TypeScript (`*.ts`, `*.tsx`) files (ReScript only)
+- [ ] No `any` types in bindings
+- [ ] ReScript warnings treated as errors (`-w +A`)
+
+=== Security
+
+- [ ] No hardcoded secrets or API keys
+- [ ] SPDX headers on all files
+- [ ] License compliance verified
+- [ ] Dependencies audited: `npm audit`
+- [ ] No unsafe patterns (e.g., `Obj.magic`, `believe_me`)
+
+=== Documentation
+
+- [ ] README.adoc is up-to-date
+- [ ] EXPLAINME.adoc explains all major decisions
+- [ ] QUICKSTART guides are tested and working
+- [ ] CHANGELOG.md is updated
+- [ ] All public APIs are documented
+
+=== Testing
+
+- [ ] Unit tests pass
+- [ ] Integration tests pass
+- [ ] No skipped tests (`skip`, `.skip`)
+- [ ] No pending tests (`xit`, `pending`)
+- [ ] Benchmarks run successfully
+
+=== Build & Deployment
+
+- [ ] Production build: `npm run build` succeeds
+- [ ] Output bundle analyzed for size/bloat
+- [ ] Source maps are included
+- [ ] Assets load correctly in browser
+- [ ] No console errors or warnings in production mode
+
+=== Git & Release
+
+- [ ] All commits are descriptive and atomic
+- [ ] No merge conflicts
+- [ ] Branch is up-to-date with `main`
+- [ ] Version number is incremented in `package.json`
+- [ ] CHANGELOG.md reflects all changes
+
+== Continuous Quality Checks
+
+These should pass on every commit:
+
+....
+npm run check      # Type check + lint
+npm test          # All tests pass
+npm run build     # Production build succeeds
+....
+
+== Known Limitations
+
+- SSR (Server-Side Rendering) not yet supported
+- Backend Deno integration deferred
+- Monorepo workspace support deferred
+
+== Future Improvements
+
+- [ ] Add Storybook for component documentation
+- [ ] Add visual regression testing
+- [ ] Add performance profiling
+- [ ] Add accessibility testing (axe)
+- [ ] Add E2E tests (Playwright or Cypress)
+- [ ] Add GraphQL integration examples
+- [ ] Add form validation library
+
+== Approval
+
+Release approved when:
+1. All audit items above are checked
+2. Reviewer confirms quality
+3. CHANGELOG is complete
+4. Version is incremented
+
+Prepared by: Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+Date: 2026-04-25

@@ -1,0 +1,250 @@
+= QUICKSTART — For Developers
+:toc: macro
+:toc-title: Contents
+
+toc::[]
+
+== Setup
+
+=== Prerequisites
+
+- Node.js 18+
+- npm 9+ (or Deno for JS dependencies)
+- ReScript 11+
+- Just (optional, for recipes)
+
+=== Installation
+
+[source,bash]
+----
+# Clone or navigate to the project
+cd rescript-vite
+
+# Install dependencies
+npm install
+
+# Initialize if using Guix/Nix
+just init    # (optional)
+----
+
+== Development Workflow
+
+=== 1. Start the Dev Server
+
+[source,bash]
+----
+npm run dev
+# OR (with Just)
+just dev
+----
+
+This starts:
+- ReScript compiler in watch mode (`npm run rescript:watch`)
+- Vite dev server on http://localhost:5173
+
+=== 2. Write Code
+
+Create or edit files in `src/rescript/`:
+
+[source,rescript]
+----
+// src/rescript/Counter.res
+@react.component
+let make = () => {
+  let (count, setCount) = React.useState(_ => 0)
+  <div>
+    <p> {count->Int.toString->React.string} </p>
+    <button onClick={_ => setCount(count + 1)}>
+      {"Increment" |> React.string}
+    </button>
+  </div>
+}
+----
+
+=== 3. Hot Module Replacement
+
+Changes are compiled and reflected in the browser instantly.
+No refresh needed (most of the time).
+
+== Code Quality
+
+=== Format Code
+
+[source,bash]
+----
+npm run fmt
+# OR
+just fmt
+----
+
+Formats ReScript and JavaScript files using prettier.
+
+=== Type Check & Lint
+
+[source,bash]
+----
+npm run check
+# OR
+just check
+----
+
+Checks ReScript types and ESLint rules.
+
+=== Run Tests
+
+[source,bash]
+----
+npm test
+# OR with UI
+npm run test:ui
+----
+
+Tests are in `tests/unit/` and `tests/integration/`.
+
+== Building for Production
+
+[source,bash]
+----
+npm run build
+----
+
+Output:
+- ReScript files compiled to `dist/rescript/`
+- Vite bundles to `dist/vite/`
+- Ready for deployment
+
+== Testing
+
+=== Unit Tests
+
+Tests for individual ReScript modules live in `tests/unit/`.
+
+Create a test:
+
+[source,rescript]
+----
+// tests/unit/Math.test.res
+open Test
+
+test("addition", () => {
+  let result = 1 + 1
+  expect(result)->toBe(2)
+})
+----
+
+=== Integration Tests
+
+Tests that verify the compiled output works with Vite:
+
+[source,bash]
+----
+tests/integration/
+----
+
+Use Vitest for browser-like testing.
+
+== Project Structure Details
+
+....
+src/
+├── rescript/           # All .res files (type-safe)
+│   ├── App.res         # Main component
+│   └── ...             # Other modules
+└── js/
+    ├── main.jsx        # Vite entry point
+    └── style.css       # Global styles
+....
+
+== Key Commands
+
+[cols="2,1"]
+|===
+| Command | Purpose
+
+| `npm run dev` | Start dev server + ReScript watch
+| `npm run build` | Production build
+| `npm run rescript:build` | Compile ReScript only
+| `npm run rescript:watch` | Watch ReScript (without Vite)
+| `npm test` | Run all tests
+| `npm run fmt` | Format code
+| `npm run check` | Type check + lint
+|===
+
+== Debugging
+
+=== ReScript Compilation Issues
+
+Check the ReScript output:
+
+[source,bash]
+----
+npm run rescript:build
+# Errors appear in the terminal
+----
+
+=== Vite Bundling Issues
+
+Check browser dev tools (F12) and check for:
+- Missing imports
+- Module resolution errors
+- CSS parsing issues
+
+=== Hot Module Replacement Not Working
+
+Restart the dev server:
+
+[source,bash]
+----
+# Ctrl+C to stop
+npm run dev
+----
+
+== Making Changes
+
+=== Adding a New ReScript Module
+
+1. Create `src/rescript/MyModule.res`
+2. Export functions:
+   [source,rescript]
+   ----
+   let myFunction = (x: int): int => x * 2
+   ----
+3. Import where needed:
+   [source,rescript]
+   ----
+   let result = MyModule.myFunction(5)
+   ----
+
+=== Adding JavaScript Dependencies
+
+[source,bash]
+----
+npm install lodash
+----
+
+Create a ReScript binding (or use genType) to use it safely.
+
+=== Modifying Configuration
+
+- **ReScript settings**: Edit `rescript.json`
+- **Vite settings**: Edit `vite.config.js`
+- **Package management**: Edit `package.json`
+
+== Commit & Push
+
+Follow the repository's contribution guidelines:
+
+[source,bash]
+----
+git add src/ tests/ docs/
+git commit -m "feat: add new Counter component"
+git push origin main
+----
+
+Always run `npm test` before committing.
+
+== See Also
+
+- xref:EXPLAINME.adoc[] — Design rationale
+- xref:README.adoc[] — Overview
+- xref:CONTRIBUTING.md[] — Contribution guidelines

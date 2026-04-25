@@ -1,0 +1,118 @@
+= rescript-vite
+:toc: macro
+:toc-title: Contents
+
+toc::[]
+
+== Overview
+
+A professional build harness and template for ReScript + Vite projects, combining type-safe frontend development with zero-config bundling.
+
+*Status:* Stable
+
+== What This Is
+
+rescript-vite is:
+- **A build template** for ReScript applications with Vite integration
+- **Type-safe by default** — ReScript's proven type system for frontend code
+- **Zero-config bundling** — Vite's lightning-fast development experience
+- **Production-ready** — Comprehensive CI/CD, security scanning, and deployment patterns
+- **Pedagogically sound** — Teaches by example: every file is annotated
+
+What this is **not**:
+- A framework (use ReScript bindings + your preferred framework)
+- A monorepo (single cohesive project)
+- An opinionated router or state library
+
+== Quick Start
+
+=== For Users
+
+[source,bash]
+----
+npm install
+npm run dev          # Start Vite dev server
+npm run build        # Production build
+npm run test         # Run test suite
+----
+
+=== For Developers
+
+[source,bash]
+----
+just dev             # Full development environment
+just test            # Run all tests
+just fmt             # Format code (ReScript + JS)
+just check           # Type-check + linting
+----
+
+See xref:QUICKSTART-DEV.adoc[] and xref:QUICKSTART-USER.adoc[] for details.
+
+== Architecture
+
+....
+rescript-vite/
+├── src/
+│   ├── rescript/         # ReScript source (types, logic)
+│   └── js/              # JavaScript bindings and Vite config
+├── tests/
+│   ├── unit/            # ReScript unit tests
+│   └── integration/      # Vite + ReScript integration tests
+├── vite.config.js       # Vite configuration
+└── rescript.json        # ReScript compiler config
+....
+
+=== ReScript → Vite Integration
+
+ReScript compiles to JavaScript in `dist/rescript/`. Vite watches this directory and bundles the final application.
+
+[source]
+----
+ReScript Source (.res) → rsc compile → JS Output (.js)
+                              ↓
+                    Vite Bundler (watches output)
+                              ↓
+                        Browser Bundle
+----
+
+== Development Workflow
+
+=== 1. Write ReScript
+[source,rescript]
+----
+// src/rescript/App.res
+let make = () => {
+  <h1> {"Hello, ReScript!" |> React.string} </h1>
+}
+----
+
+=== 2. Compile
+[source,bash]
+----
+npm run rescript:build    # Once
+# OR
+npm run rescript:watch    # Continuous (dev)
+----
+
+=== 3. Bundle & Serve
+[source,bash]
+----
+npm run dev              # Vite watches compiled JS
+----
+
+== Requirements
+
+- Node.js 18+
+- npm 9+ (or Deno)
+- ReScript 11+
+
+== License
+
+SPDX-License-Identifier: PMPL-1.0-or-later
+(MPL-2.0 is automatic legal fallback until PMPL is formally recognised)
+
+== See Also
+
+- xref:EXPLAINME.adoc[] — Design rationale and decision log
+- xref:QUICKSTART-DEV.adoc[] — Hands-on setup for contributors
+- xref:QUICKSTART-USER.adoc[] — For end users and library consumers

@@ -1,0 +1,112 @@
+(ai-manifest
+  (name "rescript-vite")
+  (version "0.1.0")
+  (purpose "Professional ReScript + Vite template for type-safe frontend development")
+
+  (canonical-locations
+    (scm-files ".machine_readable/")
+    (design-docs "EXPLAINME.adoc")
+    (quickstart "QUICKSTART-USER.adoc" "QUICKSTART-DEV.adoc")
+    (structure "README.adoc"))
+
+  (critical-invariants
+    (rule "No TypeScript (.ts, .tsx) — ReScript only"
+      (reason "Type-safe ReScript eliminates entire classes of runtime errors")
+      (enforcement "CI rejects .ts/.tsx files; prefer .res with bindings"))
+
+    (rule "All files must have SPDX header"
+      (reason "License compliance and clarity")
+      (enforcement "CI checks headers on commit"))
+
+    (rule "Tests are required for new functionality"
+      (reason "Prevents regressions and documents expected behavior")
+      (enforcement "Pre-commit hook runs `npm test`"))
+
+    (rule "Format code before commit"
+      (reason "Consistent, readable codebase")
+      (enforcement "Pre-commit hook runs `npm run fmt`"))
+
+    (rule "No hardcoded secrets, API keys, or tokens"
+      (reason "Security; prevents credential leaks")
+      (enforcement "CI scans for secrets via TruffleHog"))
+
+    (rule "ReScript warnings are errors (-w +A)"
+      (reason "Catch potential issues early")
+      (enforcement "rescript.json sets -w +A")))
+
+  (file-structure
+    (top-level
+      ("README.adoc" "Entry point; architecture overview")
+      ("EXPLAINME.adoc" "Design rationale and decisions")
+      ("QUICKSTART-USER.adoc" "For end users and library consumers")
+      ("QUICKSTART-DEV.adoc" "For contributors and developers")
+      ("package.json" "Dependencies and scripts")
+      ("rescript.json" "ReScript compiler configuration")
+      ("vite.config.js" "Vite bundler configuration")
+      ("Justfile" "Task automation (just --list for recipes)")
+      ("LICENSE" "PMPL-1.0-or-later with MPL-2.0 fallback")
+      (".editorconfig" "Editor formatting rules"))
+
+    (src-rescript
+      ("App.res" "Main application component (example)")
+      ("*.res" "ReScript modules (type-safe logic)"))
+
+    (src-js
+      ("main.jsx" "Vite entry point; React mount")
+      ("style.css" "Global styles")
+      ("*.jsx" "JavaScript-only components (minimal)"))
+
+    (tests-unit
+      ("*.test.res" "ReScript unit tests"))
+
+    (tests-integration
+      ("*.test.js" "Vitest integration tests; verify bundled output"))
+
+    (machine-readable
+      ("STATE.a2ml" "Project state, progress, blockers")
+      ("META.a2ml" "Architecture decisions (ADRs)")
+      ("ECOSYSTEM.a2ml" "Relationships to other repos")
+      ("AGENTIC.a2ml" "AI agent interaction rules")
+      ("NEUROSYM.a2ml" "Hypatia + symbolic integration config")
+      ("PLAYBOOK.a2ml" "Deployment, incident, release procedures")))
+
+  (development-workflow
+    (step-1 "Start dev server: npm run dev")
+    (step-2 "ReScript compiles to dist/rescript/; Vite watches output")
+    (step-3 "Browser HMR reflects changes instantly")
+    (step-4 "Run `npm test` before committing")
+    (step-5 "Format with `npm run fmt`"))
+
+  (ai-constraints
+    (no "Create .ts/.tsx files; use .res instead")
+    (no "Add hardcoded secrets or API keys")
+    (no "Skip tests for new functionality")
+    (no "Remove SPDX headers from files")
+    (no "Ignore ReScript compiler warnings")
+    (yes "Suggest improvements to documentation")
+    (yes "Add type-safe bindings for JavaScript libraries")
+    (yes "Refactor to improve clarity")
+    (yes "Wire in new functionality when unblocked"))
+
+  (session-hooks
+    (on-open
+      (step-1 "Read 0-AI-MANIFEST.a2ml (this file)")
+      (step-2 "Read .machine_readable/ files for project state")
+      (step-3 "Run `npm run check` to verify current state")
+      (step-4 "Acknowledge canonical locations in initial response"))
+
+    (on-close
+      (step-1 "Run `npm run fmt` to format any edits")
+      (step-2 "Run `npm test` to verify no regressions")
+      (step-3 "Commit atomically: `git add src/ tests/ docs/`")
+      (step-4 "Update .machine_readable/STATE.a2ml with progress")))
+
+  (related-projects
+    ("affinescript-vite" "Similar template for AffineScript + Vite")
+    ("rescript-developer-ecosystem" "Parent ecosystem")
+    ("rsr-template-repo" "Base template for RSR-compliant repos")
+    ("developer-ecosystem" "General development tools and frameworks"))
+
+  (author "Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>")
+  (license "PMPL-1.0-or-later")
+  (created "2026-04-25"))

@@ -1,0 +1,149 @@
+= QUICKSTART — For Users
+:toc: macro
+:toc-title: Contents
+
+toc::[]
+
+== Installation
+
+=== Prerequisites
+
+- Node.js 18 or later
+- npm 9 or later
+
+=== Setup
+
+[source,bash]
+----
+npm install
+----
+
+== Running the App
+
+=== Development Mode
+
+Start the development server with hot module replacement:
+
+[source,bash]
+----
+npm run dev
+----
+
+The app will be available at `http://localhost:5173`.
+
+Edit files in `src/rescript/` or `src/js/`; changes appear instantly in the browser.
+
+=== Production Build
+
+[source,bash]
+----
+npm run build
+----
+
+Output is written to `dist/vite/`. Deploy this directory to your hosting provider.
+
+== Common Tasks
+
+=== Run Tests
+
+[source,bash]
+----
+npm test
+----
+
+=== Format Code
+
+[source,bash]
+----
+npm run fmt
+----
+
+=== Type Check
+
+[source,bash]
+----
+npm run check
+----
+
+== Project Structure
+
+....
+rescript-vite/
+├── index.html          # Entry HTML file
+├── src/
+│   ├── rescript/       # ReScript source code (.res files)
+│   └── js/             # JavaScript bindings and styles
+├── tests/              # Test files
+├── dist/               # Build output (don't commit)
+└── vite.config.js      # Vite configuration
+....
+
+== Modifying the App
+
+=== Adding a ReScript Component
+
+Create a new file in `src/rescript/`:
+
+[source,rescript]
+----
+// src/rescript/Button.res
+@react.component
+let make = (~label, ~onClick) => {
+  <button onClick>
+    {label |> React.string}
+  </button>
+}
+----
+
+Import and use it in another component or in the main App.
+
+=== Adding Styles
+
+Add CSS to `src/js/style.css` or create a new CSS file.
+Import it in `src/js/main.jsx`:
+
+[source,javascript]
+----
+import './style.css'
+import './custom.css'  // new styles
+----
+
+=== Using JavaScript Libraries
+
+Most JavaScript libraries can be used from ReScript via bindings.
+See xref:EXPLAINME.adoc[] for guidance on creating bindings.
+
+== Troubleshooting
+
+=== "Module not found" errors
+
+Ensure ReScript has compiled your files:
+[source,bash]
+----
+npm run rescript:build
+----
+
+=== Hot module replacement not working
+
+Restart the dev server:
+[source,bash]
+----
+npm run dev
+----
+
+=== Tests failing after code changes
+
+Clear the cache:
+[source,bash]
+----
+rm -rf node_modules .rescript
+npm install
+npm test
+----
+
+== Next Steps
+
+- Read xref:README.adoc[] for architecture overview
+- Check out examples in `examples/` directory
+- See xref:EXPLAINME.adoc[] for design decisions
+- Run `npm run check` to validate your code

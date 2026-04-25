@@ -1,0 +1,100 @@
+(ecosystem
+  (name "rescript-vite")
+  (type "build-template")
+  (purpose "Professional ReScript + Vite integration for frontend development")
+  (version "0.1.0")
+
+  (position-in-ecosystem
+    (parent "rescript-developer-ecosystem")
+    (role "Template and reference implementation for ReScript + Vite projects")
+    (maturity "stable")
+    (adoption "early"))
+
+  (related-projects
+    (project-1
+      (name "affinescript-vite")
+      (type "sibling")
+      (relationship "Similar template for AffineScript + Vite")
+      (url "https://github.com/hyperpolymath/affinescript-ecosystem"))
+
+    (project-2
+      (name "rsr-template-repo")
+      (type "upstream")
+      (relationship "Base template for RSR-compliant repositories")
+      (url "https://github.com/hyperpolymath/rsr-template-repo"))
+
+    (project-3
+      (name "rescript-developer-ecosystem")
+      (type "parent")
+      (relationship "Parent ecosystem containing multiple ReScript projects")
+      (url "https://github.com/hyperpolymath/rescript-developer-ecosystem"))
+
+    (project-4
+      (name "developer-ecosystem")
+      (type "sibling-ecosystem")
+      (relationship "General development tools and frameworks")
+      (url "https://github.com/hyperpolymath/developer-ecosystem")))
+
+  (dependencies
+    (external-1
+      (name "ReScript")
+      (version "11.0.0+")
+      (type "language")
+      (purpose "Type-safe language that compiles to JavaScript"))
+
+    (external-2
+      (name "Vite")
+      (version "5.0.0+")
+      (type "bundler")
+      (purpose "Zero-config bundling and development server"))
+
+    (external-3
+      (name "React")
+      (version "18.2.0+")
+      (type "ui-library")
+      (purpose "Default UI library for components")))
+
+  (integration-points
+    (integration-1
+      (service "GitHub Actions")
+      (purpose "CI/CD: quality checks, tests, security scanning")
+      (location ".github/workflows/"))
+
+    (integration-2
+      (service "npm")
+      (purpose "Package management and script execution")
+      (location "package.json"))
+
+    (integration-3
+      (service "EditorConfig")
+      (purpose "Consistent editor settings across team")
+      (location ".editorconfig")))
+
+  (ecosystem-impact
+    (impact-1
+      (area "Frontend Development")
+      (statement "Demonstrates type-safe frontend development with ReScript"))
+
+    (impact-2
+      (area "ReScript Adoption")
+      (statement "Provides a turnkey template for new ReScript projects"))
+
+    (impact-3
+      (area "Build Tooling")
+      (statement "Shows best practices for ReScript + modern bundlers")))
+
+  (future-integrations
+    (planned-1
+      (name "Storybook")
+      (purpose "Component documentation and visual testing")
+      (timeline "v0.3.0"))
+
+    (planned-2
+      (name "Playwright")
+      (purpose "End-to-end testing")
+      (timeline "v0.3.0"))
+
+    (planned-3
+      (name "GraphQL Support")
+      (purpose "Type-safe API integration")
+      (timeline "v0.4.0"))))

@@ -1,0 +1,31 @@
+{
+  "version": "11.0.0",
+  "sources": [
+    {
+      "dir": "src/rescript",
+      "subdirs": true
+    }
+  ],
+  "package-specs": {
+    "module": "es6",
+    "in-source": false
+  },
+  "suffix": ".res.js",
+  "js-post-build": {
+    "cmd": "echo 'ReScript compiled to dist/rescript'"
+  },
+  "warnings": {
+    "error": "+A",
+    "number": 101
+  },
+  "bsc-flags": [
+    "-w",
+    "+A-4-9-40-41-42-50-61-102"
+  ],
+  "namespace": true,
+  "refmt": 3,
+  "gentypeconfig": {
+    "generatesEmitType": true,
+    "language": "typescript"
+  }
+}

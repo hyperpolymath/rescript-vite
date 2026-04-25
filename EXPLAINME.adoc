@@ -1,0 +1,120 @@
+= EXPLAINME — rescript-vite Design Rationale
+:toc: macro
+:toc-title: Contents
+
+toc::[]
+
+== Design Philosophy
+
+rescript-vite balances three priorities:
+
+1. **Type Safety** — ReScript's proven type system catches bugs at compile-time
+2. **Developer Experience** — Vite's zero-config bundling and instant HMR
+3. **Teachability** — Every file is documented; readers learn by example
+
+== Why ReScript?
+
+* **Proven type system** — No ambiguity in types; all code is verifiable
+* **Excellent interop** — Seamless bindings to JavaScript libraries
+* **Predictable semantics** — No runtime type coercion surprises
+* **Fast compilation** — Incremental builds measured in milliseconds
+* **Mature ecosystem** — ReScript bindings for React, DOM, and 500+ libraries
+
+== Why Vite?
+
+* **Zero-config** — Works out of the box; configuration is minimal
+* **Lightning-fast HMR** — Near-instant module replacement during development
+* **Standard tooling** — Built on proven technologies (Rollup, esbuild)
+* **Framework-agnostic** — Pairs with React, Preact, vanilla JS, or any library
+* **Production-grade** — Generates optimised bundles with code splitting
+
+== Architecture Decisions
+
+=== ReScript Compiles, Vite Bundles
+
+We separate compilation from bundling:
+
+```
+ReScript (type-safe logic) → JavaScript (output)
+                               ↓
+                         Vite (watches, bundles)
+                               ↓
+                         Browser Bundle
+```
+
+This separation allows:
+* Developers to use any JavaScript build tool (not tied to Vite)
+* The flexibility to swap bundlers without changing ReScript code
+* Clear separation of concerns
+
+=== Single rescript.json
+
+One `rescript.json` per project; all configuration lives here.
+Avoids configuration split across multiple files.
+
+=== Bindings in TypeScript (for DX)
+
+JavaScript interop bindings are written as TypeScript definitions (`.d.ts`).
+This provides IDE autocompletion and documents the JavaScript boundary clearly.
+
+== Testing Strategy
+
+=== ReScript Unit Tests
+
+Use ReScript's native testing tools (e.g., Rely, ppx_inline_test).
+Tests are **compiled with the application**, ensuring type safety is continuous.
+
+=== Integration Tests
+
+JavaScript integration tests (Vitest, Jest) verify the bundled output works in browsers.
+
+=== No Mocks by Default
+
+We test against real compiled output, not mocked modules.
+Prevents the classic error: "tests pass, but production breaks."
+
+== Deployment Targets
+
+=== Browser (SPA)
+
+Standard Vite → browser bundle. Suitable for:
+* Single-page applications (React, Preact, vanilla)
+* Progressive web apps (PWA)
+
+=== Static Site Generation (SSG)
+
+Not yet included, but compatible with:
+* Prerender plugins
+* Static export tools
+* Server-side rendering (SSR) with Node.js adapters
+
+=== Node.js / Deno
+
+ReScript can target backend code via deno.json imports.
+Separate configuration for backend vs frontend not yet included.
+
+== Licensing & Attribution
+
+All original code in rescript-vite:
+- **SPDX-License-Identifier:** PMPL-1.0-or-later
+- **(MPL-2.0 automatic fallback)** until PMPL is formally recognised
+- **Author:** Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+
+See xref:LICENSE[] for full legal text.
+
+== Future Directions
+
+=== SSR Support
+
+Server-side rendering with ReScript + Vite (e.g., Astro, remix).
+Requires architecture for sharing code between Node.js and browser.
+
+=== Monorepo Mode
+
+Support for workspaces with multiple ReScript projects in a single Vite build.
+Currently out of scope; can be added if needed.
+
+=== Backend Integration
+
+Deno + ReScript for backend services (API servers, database access).
+Out of scope for this template; see `developer-ecosystem` for backend patterns.

@@ -1,0 +1,27 @@
+{
+  "name": "rescript-vite",
+  "description": "Professional ReScript + Vite template for type-safe frontend development",
+  "homepage": "https://github.com/hyperpolymath/rescript-developer-ecosystem/tree/main/rescript-vite",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hyperpolymath/rescript-developer-ecosystem"
+  },
+  "bugs": {
+    "url": "https://github.com/hyperpolymath/rescript-developer-ecosystem/issues"
+  },
+  "license": "PMPL-1.0-or-later",
+  "authors": [
+    {
+      "name": "Jonathan D.A. Jewell",
+      "email": "j.d.a.jewell@open.ac.uk"
+    }
+  ],
+  "keywords": [
+    "rescript",
+    "vite",
+    "type-safe",
+    "frontend",
+    "template"
+  ],
+  "status": "stable"
+}

@@ -1,0 +1,88 @@
+(meta
+  (name "rescript-vite")
+  (purpose "Professional ReScript + Vite template for type-safe frontend development")
+  (type "Build Template")
+  (audience "Frontend developers")
+
+  (architecture-decisions
+    (adr-001
+      (title "Separate ReScript compilation from Vite bundling")
+      (status "accepted")
+      (context "ReScript and Vite serve different roles: ReScript provides type safety, Vite provides bundling")
+      (decision "Compile ReScript to JavaScript, let Vite bundle and serve")
+      (consequences
+        ("Flexibility to swap bundlers")
+        ("Clear separation of concerns")
+        ("Type safety at compile-time")))
+
+    (adr-002
+      (title "No TypeScript; ReScript only")
+      (status "accepted")
+      (context "TypeScript offers optional typing; ReScript offers mandatory typing")
+      (decision "Use ReScript for all frontend code; no TypeScript")
+      (consequences
+        ("Zero runtime type errors")
+        ("Better IDE support")
+        ("Steeper learning curve for TS developers")))
+
+    (adr-003
+      (title "React as the default UI library")
+      (status "accepted")
+      (context "React is mature, well-supported, and has excellent ReScript bindings")
+      (decision "Ship with React 18 + ReScript bindings")
+      (consequences
+        ("Large ecosystem of libraries")
+        ("Easy to learn for React developers")
+        ("Can swap for Preact with minimal changes"))))
+
+  (development-practices
+    (practice-1
+      (name "Type-driven development")
+      (description "Lean on the type system to guide implementation"))
+
+    (practice-2
+      (name "Test-driven development")
+      (description "Write tests before or alongside code"))
+
+    (practice-3
+      (name "Documentation-driven design")
+      (description "EXPLAINME.adoc is the source of truth for design rationale"))
+
+    (practice-4
+      (name "Continuous integration")
+      (description "Run quality checks on every commit")))
+
+  (design-rationale
+    (rationale-1
+      (topic "Why ReScript?")
+      (answer
+        "ReScript provides a proven type system that eliminates entire classes of runtime errors. "
+        "Unlike TypeScript (which offers optional typing), ReScript makes types mandatory, "
+        "ensuring all code is verified at compile-time."))
+
+    (rationale-2
+      (topic "Why Vite?")
+      (answer
+        "Vite offers zero-config bundling with lightning-fast HMR. "
+        "It's framework-agnostic, production-grade, and built on proven technologies like Rollup and esbuild."))
+
+    (rationale-3
+      (topic "Why separate compilation?")
+      (answer
+        "Separation allows ReScript to serve its core purpose (type safety) "
+        "while Vite handles bundling independently. This flexibility enables swapping bundlers "
+        "without changing ReScript code.")))
+
+  (quality-standards
+    (standard-1 "All files have SPDX headers")
+    (standard-2 "ReScript warnings treated as errors (-w +A)")
+    (standard-3 "100% test coverage required")
+    (standard-4 "Code formatted with prettier and rescript fmt")
+    (standard-5 "All public APIs documented")
+    (standard-6 "No hardcoded secrets or API keys"))
+
+  (governance
+    (maintainer "Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>")
+    (license "PMPL-1.0-or-later")
+    (coc "CODE_OF_CONDUCT.md")
+    (contributing "CONTRIBUTING.md")))
