@@ -56,6 +56,54 @@ import ApiExample from '@/ApiExample'
 3. Add retry logic for failed requests
 4. Implement caching or request deduplication
 
+== RoutingExample.res
+
+**What it shows:** Client-side hash-based routing without external libraries.
+
+- Demonstrates hash-based URL routing pattern
+- Variant types for route definitions
+- Event listener setup and cleanup
+- Multiple page components
+- Navigation links
+
+**Key patterns:**
+- Route enum for type-safe route definitions
+- `React.useEffect0` for listening to hash changes
+- Pattern matching for rendering correct page
+- Hash-based URL updates
+
+**Run it:**
+```bash
+# Copy into src/rescript/RoutingExample.res and import into App.res
+import RoutingExample from '@/RoutingExample'
+```
+
+**Note:** This is a simple example for learning. For production, consider libraries like `@reach/router` or `wouter` for more features (params, nested routes, prefetching).
+
+== StateManagementExample.res
+
+**What it shows:** Global state management using reducer pattern.
+
+- Demonstrates `React.useReducer` for complex state
+- Variant types for actions
+- Multiple state concerns (counter, todos, user)
+- Reducers for predictable state updates
+- Pattern matching for state transitions
+
+**Key patterns:**
+- Reducer function for pure state updates
+- Action variant for typed state changes
+- `React.useReducer` hook for global state
+- Modular sections consuming shared state
+
+**Run it:**
+```bash
+# Copy into src/rescript/StateManagementExample.res and import into App.res
+import StateManagementExample from '@/StateManagementExample'
+```
+
+**Note:** For larger apps, consider React Context for prop drilling avoidance, or libraries like Redux/Zustand for advanced features.
+
 == ComponentLibraryExample.res
 
 **What it shows:** Building reusable component libraries.
@@ -155,8 +203,29 @@ Examples use class names for styling. Add CSS to `src/js/style.css`:
 3. **Run dev server:** `npm run dev`
 4. **Modify and experiment** — ReScript will type-check as you edit
 
+== testing-guide.md
+
+**What it covers:** Comprehensive guide to testing in rescript-vite.
+
+- Unit testing pure ReScript functions
+- Integration testing React components
+- Async testing patterns
+- Form testing
+- Mocking and fixtures
+- Coverage reports
+- Best practices
+
+**Run tests:**
+```bash
+npm test              # Run all tests
+npm test -- --watch  # Watch mode
+npm run test:ui      # UI mode
+npm test -- --coverage  # Coverage report
+```
+
 ## See Also
 
 - xref:../README.adoc[] — Project overview
 - xref:../EXPLAINME.adoc[] — Design decisions
 - xref:../QUICKSTART-DEV.adoc[] — Development guide
+- xref:./testing-guide.md[] — Testing guide with examples

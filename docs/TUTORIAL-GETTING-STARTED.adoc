@@ -1,0 +1,481 @@
+= Getting Started with rescript-vite
+:toc: macro
+:toc-title: Contents
+:author: Jonathan D.A. Jewell
+:date: 2026-04-25
+
+toc::[]
+
+== Introduction
+
+Welcome to **rescript-vite** — a professional, zero-config build system for type-safe ReScript + Vite projects.
+
+This tutorial will guide you from zero to your first working application in 15 minutes. We'll build a simple counter app that teaches the core concepts: React components, event handling, state management, and hot module replacement.
+
+=== What You'll Learn
+
+- Set up a new rescript-vite project
+- Write your first ReScript React component
+- Handle user interactions with events
+- Manage component state with `React.useState`
+- Use hot module replacement (HMR) for instant feedback
+- Build for production
+
+=== Prerequisites
+
+- **Node.js 18+** (download from https://nodejs.org)
+- **npm 9+** (comes with Node.js)
+- **A code editor** (VS Code, Vim, etc.)
+- **5-10 minutes** of free time
+
+=== What is ReScript?
+
+ReScript is a language that compiles to JavaScript but provides:
+- **Mandatory types** — catch bugs at compile-time, not runtime
+- **No `undefined` or `null` errors** — the type system prevents them
+- **Excellent interop** — seamlessly use JavaScript libraries
+- **Fast compilation** — compile in milliseconds
+- **Great developer experience** — clear error messages
+
+Think TypeScript, but with type safety you can actually trust.
+
+---
+
+== Part 1: Installation & Setup (3 minutes)
+
+=== Step 1: Create a new project
+
+Open your terminal and run:
+
+```bash
+mkdir my-rescript-app
+cd my-rescript-app
+npm create vite@latest . -- --template react
+npm install
+```
+
+This creates a Vite project with React. Now we'll convert it to use ReScript.
+
+=== Step 2: Add ReScript
+
+```bash
+npm install --save-dev rescript
+npm install react react-dom
+```
+
+=== Step 3: Initialize ReScript configuration
+
+Create `rescript.json` in your project root:
+
+```json
+{
+  "version": "11.0.0",
+  "sources": [
+    {
+      "dir": "src/rescript",
+      "subdirs": true
+    }
+  ],
+  "package-specs": {
+    "module": "es6",
+    "in-source": false
+  },
+  "suffix": ".res.js",
+  "namespace": true
+}
+```
+
+=== Step 4: Create the ReScript source directory
+
+```bash
+mkdir -p src/rescript
+```
+
+=== Step 5: Update package.json scripts
+
+Replace the `scripts` section in `package.json`:
+
+```json
+"scripts": {
+  "dev": "concurrently \"npm run rescript:watch\" \"vite\"",
+  "build": "npm run rescript:build && vite build",
+  "rescript:build": "rescript build",
+  "rescript:watch": "rescript build -w",
+  "preview": "vite preview"
+}
+```
+
+Install `concurrently`:
+
+```bash
+npm install --save-dev concurrently
+```
+
+=== Step 6: Start developing
+
+```bash
+npm run dev
+```
+
+Your browser should open to `http://localhost:5173` with a blank page. Great! You're ready to write code.
+
+---
+
+== Part 2: Your First Component (5 minutes)
+
+=== Create App.res
+
+Create `src/rescript/App.res`:
+
+```rescript
+// SPDX-License-Identifier: PMPL-1.0-or-later
+@react.component
+let make = () => {
+  <div>
+    <h1> {"Welcome to ReScript!" |> React.string} </h1>
+  </div>
+}
+```
+
+This is a React component written in ReScript. Let's break it down:
+
+- `@react.component` — tells ReScript this is a React component
+- `let make = () => {...}` — the component function (always named `make`)
+- `<h1> ... </h1>` — JSX syntax (works in ReScript just like React)
+- `"Welcome to ReScript!" |> React.string` — converts a string to React text
+
+Save the file. ReScript compiled it automatically. ✓
+
+=== Update index.html
+
+Modify `index.html` to mount your component:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReScript + Vite</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/js/main.jsx"></script>
+  </body>
+</html>
+```
+
+=== Create src/js/main.jsx
+
+Create `src/js/main.jsx`:
+
+```jsx
+// SPDX-License-Identifier: PMPL-1.0-or-later
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from '@rescript/App.res.js'  // Import compiled ReScript!
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+)
+```
+
+The key line: `import App from '@rescript/App.res.js'` — this imports the compiled JavaScript from your ReScript code.
+
+Check your browser. You should see "Welcome to ReScript!" ✓
+
+---
+
+== Part 3: Add Interactivity (4 minutes)
+
+=== Create a Counter component
+
+Update `src/rescript/App.res`:
+
+```rescript
+// SPDX-License-Identifier: PMPL-1.0-or-later
+@react.component
+let make = () => {
+  // useState is a React hook for component state
+  let (count, setCount) = React.useState(_ => 0)
+
+  <div className="app">
+    <h1> {"Counter" |> React.string} </h1>
+
+    <p>
+      {"Current count: " ++ Int.toString(count) |> React.string}
+    </p>
+
+    <button onClick={_ => setCount(_ => count + 1)}>
+      {"+1" |> React.string}
+    </button>
+
+    <button onClick={_ => setCount(_ => count - 1)}>
+      {"-1" |> React.string}
+    </button>
+
+    <button onClick={_ => setCount(_ => 0)}>
+      {"Reset" |> React.string}
+    </button>
+  </div>
+}
+```
+
+Let's understand this:
+
+- `let (count, setCount) = React.useState(_ => 0)` — create state with initial value 0
+  - `count` — the current value
+  - `setCount` — function to update the value
+  - `_ => 0` — initializer (ignoring the previous state, just use 0)
+
+- `Int.toString(count)` — convert integer to string (ReScript requires explicit conversion)
+
+- `onClick={_ => setCount(_ => count + 1)}` — click handler
+  - `_ =>` — ignore the React event, just run the handler
+  - `setCount(_ => count + 1)` — update state to `count + 1`
+
+Save and check your browser. Click the buttons! The counter changes in real-time. ✓
+
+=== Add some styling
+
+Create `src/js/style.css`:
+
+```css
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  min-width: 300px;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+p {
+  font-size: 1.5rem;
+  color: #667eea;
+  margin-bottom: 30px;
+  font-weight: bold;
+}
+
+button {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  margin: 0 8px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #764ba2;
+}
+```
+
+Import it in `src/js/main.jsx`:
+
+```jsx
+import './style.css'  // Add this line
+```
+
+Save and reload. Much better! ✓
+
+---
+
+== Part 4: Hot Module Replacement (2 minutes)
+
+This is the magic of Vite: your changes appear instantly without losing state.
+
+Try this:
+1. Edit the "+1" button text to "+2"
+2. Change the button color in CSS
+3. Save the file
+
+**Watch your browser update in real-time without refreshing!** The counter value stays the same. This is HMR (Hot Module Replacement). ✓
+
+---
+
+== Part 5: Build for Production (1 minute)
+
+When you're ready to ship:
+
+```bash
+npm run build
+```
+
+This creates a `dist/` folder with optimized, minified code ready for deployment.
+
+```bash
+# Preview the production build
+npm run preview
+```
+
+Open `http://localhost:4173` to see your production build.
+
+---
+
+== Part 6: Understanding ReScript Syntax
+
+Now that you have a working app, let's understand the key ReScript patterns:
+
+=== Strings & Concatenation
+
+```rescript
+"Hello" |> React.string           // Convert to React text
+"Hello " ++ "World"               // String concat
+"Count: " ++ Int.toString(5)      // Convert int to string
+```
+
+The `|>` operator (pipe) passes the left value to the right function. It's a way to chain operations.
+
+=== Pattern Matching
+
+```rescript
+// Match on values
+let message = switch count {
+| 0 => "Zero"
+| 1 => "One"
+| _ => "Many"  // Default case
+}
+```
+
+=== Option Types (Never `null`!)
+
+```rescript
+// user is optional
+let user: option<string> = Some("Alice")
+
+let greeting = switch user {
+| Some(name) => "Hello, " ++ name
+| None => "Hello, stranger"
+}
+```
+
+This prevents the "cannot read property of null" error entirely. ✓
+
+=== Records (like objects)
+
+```rescript
+type person = {
+  name: string,
+  age: int,
+}
+
+let alice = { name: "Alice", age: 30 }
+let bob = { ...alice, name: "Bob" }  // Copy and update
+```
+
+=== Arrays
+
+```rescript
+let numbers = [1, 2, 3, 4, 5]
+
+// Map over array
+let doubled = numbers |> Array.map(n => n * 2)  // [2, 4, 6, 8, 10]
+
+// Filter
+let evens = numbers |> Array.filter(n => mod(n, 2) == 0)  // [2, 4]
+```
+
+---
+
+== Next Steps
+
+Congratulations! You now understand the basics of rescript-vite. Here's where to go next:
+
+=== Learn More ReScript
+
+- Read xref:../README.adoc[] for project structure
+- Check out xref:../examples/README.adoc[] for more patterns (forms, APIs, routing)
+- Explore the xref:../EXPLAINME.adoc[] for design decisions
+
+=== Build Something Real
+
+1. **Todo App** — Add, remove, mark complete
+2. **Weather App** — Fetch from an API, display results
+3. **Quiz App** — Questions, scoring, progress
+4. **Notes App** — Create, edit, delete notes
+
+=== Advanced Topics
+
+- **Routing** — See `RoutingExample.res` for hash-based routing
+- **State Management** — See `StateManagementExample.res` for reducer patterns
+- **Testing** — See `testing-guide.md` for how to test components
+- **TypeScript Interop** — Bind to JavaScript libraries
+
+=== Official Resources
+
+- https://rescript-lang.org/docs/manual/latest/introduction — ReScript handbook
+- https://vitejs.dev — Vite documentation
+- https://react.dev — React documentation
+
+---
+
+== Troubleshooting
+
+=== "Cannot find module" error
+
+Make sure your `rescript.json` has:
+```json
+"sources": [{ "dir": "src/rescript", "subdirs": true }]
+```
+
+=== Styles not loading
+
+Ensure `style.css` is imported in `main.jsx`:
+```jsx
+import './style.css'
+```
+
+=== HMR not working
+
+Restart the dev server:
+```bash
+npm run dev
+```
+
+=== Build fails
+
+Check for ReScript compilation errors:
+```bash
+npm run rescript:build
+```
+
+---
+
+== Summary
+
+You now know how to:
+✓ Set up a rescript-vite project
+✓ Write ReScript React components
+✓ Handle state with `React.useState`
+✓ Bind event handlers
+✓ Use hot module replacement
+✓ Build for production
+
+You're ready to build web applications with the confidence that comes from a solid type system. Happy coding!

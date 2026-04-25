@@ -1,0 +1,401 @@
+= Project Templates
+:toc: macro
+:toc-title: Contents
+
+toc::[]
+
+== Single-Page Application (SPA)
+
+**Best for:** Interactive web apps, dashboards, real-time applications.
+
+### Structure
+
+```
+src/
+├── rescript/
+│   ├── App.res           # Main app component
+│   ├── pages/            # Page components
+│   │   ├── Home.res
+│   │   ├── About.res
+│   │   └── Contact.res
+│   ├── components/       # Reusable components
+│   │   ├── Header.res
+│   │   ├── Footer.res
+│   │   └── Navigation.res
+│   ├── hooks/            # Custom React hooks
+│   │   ├── useApi.res
+│   │   └── useFetch.res
+│   ├── types/            # Shared types
+│   │   └── Api.res
+│   └── utils/            # Utilities
+│       ├── format.res
+│       └── validate.res
+└── js/
+    └── style.css         # Global styles
+```
+
+### Key Files
+
+**vite.config.js:**
+```javascript
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    historyApiFallback: true,  // For client-side routing
+  },
+})
+```
+
+**rescript.json:**
+```json
+{
+  "version": "11.0.0",
+  "sources": [{ "dir": "src/rescript", "subdirs": true }],
+  "package-specs": { "module": "es6", "in-source": false }
+}
+```
+
+### Getting Started
+
+```bash
+npm install
+npm run dev
+# Build pages in src/rescript/pages/
+# Build components in src/rescript/components/
+# Use routing (example: RoutingExample.res)
+# Add API calls via useApi hook
+```
+
+### Benefits
+- Fast, interactive user experience
+- Client-side routing
+- API integration patterns
+- Component reusability
+
+---
+
+## Static Site Generator (SSG)
+
+**Best for:** Blogs, documentation, marketing sites, portfolios.
+
+### Structure
+
+```
+content/
+├── posts/
+│   ├── 2026-01-01-hello-world.md
+│   └── 2026-01-15-getting-started.md
+└── pages/
+    ├── about.md
+    └── contact.md
+
+src/
+├── rescript/
+│   ├── App.res
+│   ├── components/
+│   │   ├── Header.res
+│   │   ├── Footer.res
+│   │   ├── PostCard.res
+│   │   └── PostList.res
+│   └── types/
+│       └── Post.res
+├── js/
+│   └── style.css
+└── assets/
+    ├── images/
+    └── fonts/
+```
+
+### Key Build Step
+
+Add to Justfile:
+
+```just
+# Generate static site (pre-compute at build time)
+generate-static:
+  npm run build
+  # Post-build: copy content/ to dist/ (as JSON metadata)
+  # Or use a static generator plugin
+```
+
+### Getting Started
+
+```bash
+npm install
+npm run build
+# Output is fully static HTML+CSS+JS in dist/
+```
+
+### Benefits
+- Extremely fast (no server needed)
+- Perfect for SEO
+- Low hosting costs
+- Git-friendly content
+
+---
+
+## Component Library
+
+**Best for:** Shared UI components, design systems, reusable patterns.
+
+### Structure
+
+```
+src/
+├── rescript/
+│   ├── index.res          # Export barrel
+│   ├── Button.res
+│   ├── Card.res
+│   ├── Badge.res
+│   ├── Alert.res
+│   ├── Form.res
+│   └── shared/
+│       ├── styles.res
+│       └── types.res
+└── stories/               # Storybook (optional)
+    ├── Button.stories.jsx
+    ├── Card.stories.jsx
+    └── ...
+
+tests/
+└── unit/
+    ├── Button.test.js
+    ├── Card.test.js
+    └── ...
+```
+
+### Exports (src/rescript/index.res)
+
+```rescript
+// SPDX-License-Identifier: PMPL-1.0-or-later
+// Export all public components
+
+module Button = Button
+module Card = Card
+module Badge = Badge
+module Alert = Alert
+module Form = Form
+```
+
+### package.json
+
+```json
+{
+  "name": "@myorg/rescript-components",
+  "main": "./dist/rescript/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/rescript/index.d.ts",
+      "import": "./dist/rescript/index.js"
+    },
+    "./button": {
+      "types": "./dist/rescript/Button.d.ts",
+      "import": "./dist/rescript/Button.js"
+    }
+  }
+}
+```
+
+### Getting Started
+
+```bash
+npm install
+npm run build
+npm publish  # To npm registry
+```
+
+### Benefits
+- Reusable across projects
+- Type-safe component props
+- Documented patterns
+- Version-controlled design system
+
+---
+
+## Real-Time Application
+
+**Best for:** Chat apps, collaborative editors, live dashboards, multiplayer games.
+
+### Structure
+
+```
+src/
+├── rescript/
+│   ├── App.res
+│   ├── websocket/
+│   │   ├── Connection.res
+│   │   └── Message.res
+│   ├── state/
+│   │   ├── reducer.res
+│   │   └── types.res
+│   ├── components/
+│   │   ├── ChatWindow.res
+│   │   ├── MessageList.res
+│   │   ├── UserList.res
+│   │   └── InputBar.res
+│   └── hooks/
+│       └── useWebSocket.res
+└── js/
+    └── style.css
+```
+
+### WebSocket Hook (src/rescript/hooks/useWebSocket.res)
+
+```rescript
+let useWebSocket = (url: string, onMessage) => {
+  React.useEffect0(() => {
+    let ws = WebSocket.create(url)
+
+    ws["onmessage"] = event => {
+      let message = event["data"]
+      onMessage(message)
+    }
+
+    Some(() => {
+      ws["close"]()
+    })
+  })
+}
+```
+
+### Getting Started
+
+```bash
+npm install
+npm run dev
+# Connect to WebSocket server
+# Build message types
+# Implement reducer for real-time updates
+```
+
+### Benefits
+- Instant UI updates
+- Bidirectional communication
+- Scalable with proper backend
+- Engaging user experience
+
+---
+
+## API-Driven Application
+
+**Best for:** Dashboards, admin panels, data visualization tools.
+
+### Structure
+
+```
+src/
+├── rescript/
+│   ├── App.res
+│   ├── api/
+│   │   ├── client.res
+│   │   ├── endpoints.res
+│   │   └── types.res
+│   ├── hooks/
+│   │   ├── useApi.res
+│   │   ├── useFetch.res
+│   │   └── useQuery.res
+│   ├── pages/
+│   │   ├── Dashboard.res
+│   │   ├── DataTable.res
+│   │   └── Charts.res
+│   ├── components/
+│   │   ├── DataGrid.res
+│   │   ├── Chart.res
+│   │   └── Filters.res
+│   └── state/
+│       └── reducer.res
+└── js/
+    └── style.css
+```
+
+### API Client (src/rescript/api/client.res)
+
+```rescript
+type response<'a> =
+  | Loading
+  | Success('a)
+  | Error(string)
+
+let fetchData = async (url: string) => {
+  try {
+    let res = await fetch(url)
+    let json = await res.json()
+    Success(json)
+  } catch {
+  | _ => Error("Failed to fetch")
+  }
+}
+```
+
+### Getting Started
+
+```bash
+npm install
+npm run dev
+# Define API types
+# Implement fetch hooks
+# Build components that consume API data
+```
+
+### Benefits
+- Separation of concerns (API layer)
+- Type-safe API responses
+- Easy to test
+- Scalable architecture
+
+---
+
+## CLI/Backend Project (Deno)
+
+**Best for:** Build tools, server-side rendering, worker scripts.
+
+### Structure
+
+```
+src/
+├── cli.ts              # Entry point
+├── commands/
+│   ├── build.ts
+│   ├── dev.ts
+│   └── deploy.ts
+├── lib/
+│   ├── config.ts
+│   ├── utils.ts
+│   └── types.ts
+└── server/
+    ├── handler.ts
+    └── middleware.ts
+
+deno.json              # Deno config
+```
+
+### Getting Started
+
+```bash
+deno run --allow-read --allow-write src/cli.ts --help
+```
+
+### Benefits
+- No npm dependencies
+- Built-in TypeScript support
+- Security model (explicit permissions)
+- Single executable
+
+---
+
+## Choosing a Template
+
+| Template | Best For | Complexity | Hosting |
+|----------|----------|------------|---------|
+| **SPA** | Interactive apps, dashboards | Medium | Any (CDN-ready) |
+| **SSG** | Blogs, docs, marketing | Low | Static hosting (Vercel, Netlify) |
+| **Component Library** | Reusable components | Low-Medium | npm registry |
+| **Real-Time** | Chat, collaboration | High | Server with WebSocket |
+| **API-Driven** | Dashboards, data tools | Medium | CDN + API backend |
+| **Deno** | Build tools, backends | High | Deno Deploy |
+
+Start with **SPA** if you're new to rescript-vite. It covers most use cases and scales well.

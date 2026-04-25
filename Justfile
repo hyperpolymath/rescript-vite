@@ -120,6 +120,24 @@ bump-version version:
   npm version {{ version }} --no-git-tag-v
   echo "✓ Version bumped to {{ version }}"
 
+# Scaffolding new projects
+scaffold template='spa' name='my-app':
+  #!/bin/bash
+  echo "Scaffolding rescript-vite project..."
+  ./scripts/scaffold.sh --template {{template}} --name {{name}}
+
+scaffold-spa name='my-app':
+  @just scaffold spa {{name}}
+
+scaffold-ssg name='my-blog':
+  @just scaffold ssg {{name}}
+
+scaffold-lib name='my-components':
+  @just scaffold lib {{name}}
+
+scaffold-realtime name='my-chat':
+  @just scaffold realtime {{name}}
+
 # Help
 @help:
   echo "rescript-vite Justfile"
@@ -140,6 +158,12 @@ bump-version version:
   echo "  just rescript    - Compile ReScript"
   echo "  just rescript-watch - Watch ReScript files"
   echo "  just size        - Analyze build size"
+  echo ""
+  echo "Scaffolding new projects:"
+  echo "  just scaffold-spa name=my-app          - Create SPA (single-page app)"
+  echo "  just scaffold-ssg name=my-blog         - Create SSG (static site)"
+  echo "  just scaffold-lib name=my-components   - Create component library"
+  echo "  just scaffold-realtime name=my-chat    - Create real-time app"
   echo ""
   echo "Maintenance:"
   echo "  just clean       - Remove build artifacts"
