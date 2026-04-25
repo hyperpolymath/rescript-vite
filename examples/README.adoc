@@ -1,0 +1,162 @@
+= rescript-vite Examples
+:toc: macro
+:toc-title: Contents
+
+toc::[]
+
+== Overview
+
+This directory contains practical examples demonstrating common patterns in ReScript + Vite applications. Each example is type-safe and self-contained.
+
+== FormExample.res
+
+**What it shows:** Type-safe form handling with validation.
+
+- Demonstrates form state management with `React.useState`
+- Type-safe field updates using variant pattern matching
+- Real-time validation feedback
+- Error message rendering
+- Form submission handling
+
+**Key patterns:**
+- Record types for structured form data
+- Option types for nullable error messages
+- Pattern matching for conditional rendering
+
+**Run it:**
+```bash
+# Copy into src/rescript/FormExample.res and import into App.res
+import FormExample from '@/FormExample'
+```
+
+== ApiExample.res
+
+**What it shows:** Type-safe asynchronous data fetching from APIs.
+
+- Demonstrates `Js.Promise` with `async`/`await`
+- Variant types for managing async states (Loading, Success, Error)
+- Error handling and recovery
+- Rendering based on state
+
+**Key patterns:**
+- State variants for representing different async states
+- `React.useEffect0` for side effects
+- Promise-based async operations
+- Type-safe error handling
+
+**Run it:**
+```bash
+# Copy into src/rescript/ApiExample.res and import into App.res
+import ApiExample from '@/ApiExample'
+```
+
+**Note:** The current example fetches from JSONPlaceholder (public API). In production, you'd:
+1. Add a proper JSON decoder (e.g., `@rescript/core` or a custom decoder)
+2. Handle authentication (Bearer tokens, API keys)
+3. Add retry logic for failed requests
+4. Implement caching or request deduplication
+
+== ComponentLibraryExample.res
+
+**What it shows:** Building reusable component libraries.
+
+- Demonstrates namespaced components with `module`
+- Component variants for styling (Button, Badge, Alert levels)
+- Composition of smaller components into larger ones
+- Type-safe prop passing
+- Optional callbacks with pattern matching
+
+**Key patterns:**
+- Module-based component organization
+- Variant types for component variants (Primary, Secondary, etc.)
+- Optional props with `~prop=?`
+- Reusable, composable components
+
+**Built components:**
+- **Button** — Primary, Secondary, Danger variants
+- **Card** — Container with header and body
+- **Badge** — Color variants (Blue, Green, Red, Yellow)
+- **Alert** — Info, Success, Warning, Error levels with dismiss
+
+**Run it:**
+```bash
+# Copy into src/rescript/ComponentLibraryExample.res and import into App.res
+import ComponentLibraryExample from '@/ComponentLibraryExample'
+```
+
+## Common Patterns Across Examples
+
+=== Type Safety
+
+All examples leverage ReScript's type system:
+- **Records** for structured data
+- **Variants** for enums and polymorphic states
+- **Options** for nullable values
+- **Pattern matching** for conditional logic
+
+=== State Management
+
+All examples use `React.useState` for local state:
+```rescript
+let (state, setState) = React.useState(_ => initialValue)
+```
+
+=== Event Handling
+
+Consistent event handling patterns:
+```rescript
+onChange={e => handleChange(ReactEvent.Form.target(e)["value"])}
+onClick={_ => handleClick()}
+onSubmit={e => {
+  ReactEvent.Form.preventDefault(e)
+  // Handle submission
+}}
+```
+
+=== Conditional Rendering
+
+Using pattern matching for clean conditionals:
+```rescript
+{switch state {
+| Loading => <p>Loading...</p>
+| Success(data) => <div>{render(data)}</div>
+| Error(err) => <div>Error: {err}</div>
+}}
+```
+
+## Styling
+
+Examples use class names for styling. Add CSS to `src/js/style.css`:
+
+```css
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: #0ea5e9;
+  color: white;
+}
+
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+}
+```
+
+## Next Steps
+
+1. **Copy an example** into `src/rescript/`
+2. **Import it** in `src/rescript/App.res`
+3. **Run dev server:** `npm run dev`
+4. **Modify and experiment** — ReScript will type-check as you edit
+
+## See Also
+
+- xref:../README.adoc[] — Project overview
+- xref:../EXPLAINME.adoc[] — Design decisions
+- xref:../QUICKSTART-DEV.adoc[] — Development guide
